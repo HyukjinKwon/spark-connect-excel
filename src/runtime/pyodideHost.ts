@@ -168,17 +168,26 @@ export class PyodideHost implements RuntimeHost {
       this._worker = worker;
 
       // ---- 2. Wire bridge.js on the main thread ----------------------------
-      // bridge.js is an ES module served at /vendor/bridge.js. Dynamic import
-      // works because the dialog page itself is a module-capable context.
-      // installBridge attaches a "message" listener to the worker that handles
-      // pcw_sab (attach SAB views) and pcw_rpc (perform fetch + SAB writeback).
+      // bridge.js is an ES module in public/vendor/ that exports
+      // installBridge(worker). We must NOT `import("/vendor/bridge.js")`
+      // directly: the Vite dev server refuses to serve a public-dir file as a
+      // source module ("can only be referenced via HTML tags"), which breaks the
+      // dev server / quickstart (a production build serves it statically, so CI
+      // never hit this). Instead fetch the source and import it as a blob module.
+      // bridge.js is self-contained (only exports, no imports), so this is safe,
+      // and it works identically under `vite dev`, `vite preview`, and a build.
       onProgress?.("Wiring SAB bridge…");
-      // Non-literal specifier: the bridge is a same-origin runtime asset under
-      // public/vendor/, resolved by the browser at execution time, not bundled.
-      const bridgeModUrl = "/vendor/bridge.js";
-      const bridgeMod = (await import(/* @vite-ignore */ bridgeModUrl)) as {
-        installBridge(worker: Worker): void;
-      };
+      const bridgeUrl = new URL("/vendor/bridge.js", self.location.origin).href;
+      const bridgeSrc = await (await fetch(bridgeUrl)).text();
+      const bridgeBlobUrl = URL.createObjectURL(new Blob([bridgeSrc], { type: "text/javascript" }));
+      let bridgeMod: { installBridge(worker: Worker): void };
+      try {
+        bridgeMod = (await import(/* @vite-ignore */ bridgeBlobUrl)) as {
+          installBridge(worker: Worker): void;
+        };
+      } finally {
+        URL.revokeObjectURL(bridgeBlobUrl);
+      }
       bridgeMod.installBridge(worker);
 
       // ---- 3. Wire the RPC handle for pcw_run / pcw_result -----------------
