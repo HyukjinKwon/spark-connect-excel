@@ -15,6 +15,7 @@ import { PyodideHost } from "../runtime/pyodideHost";
 import { SparkBridgeHost } from "../bridge/sparkBridgeHost";
 import { buildRemoteUri } from "../connection/connectionStore";
 import { renderResultTable } from "./resultTable";
+import { renderChart } from "./chartView";
 import { createCodeEditor } from "./editor";
 
 type Mode = "sql" | "python";
@@ -217,7 +218,13 @@ function boot(): void {
       if (mode === "sql") {
         const cap = Number(capInput.value) || 1000;
         const result = await bridge.runSQL(src, cap);
-        results.replaceChildren(renderResultTable(result));
+        const tableEl = renderResultTable(result);
+        const chartEl = renderChart(result);
+        if (chartEl !== null) {
+          results.replaceChildren(tableEl, chartEl);
+        } else {
+          results.replaceChildren(tableEl);
+        }
         runStatus.textContent = "Done.";
       } else {
         if (!connected) await bridge.ensureReady();

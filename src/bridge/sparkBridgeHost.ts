@@ -39,12 +39,21 @@ function utf8ToBase64(str: string): string {
   return btoa(binary);
 }
 
+// Sentinel that brackets the runtime's JSON payload in the worker's captured
+// stdout. The worker (worker_bootstrap.js) captures stdout, NOT the Python
+// return value, so the snippet must PRINT its result. We wrap it in this
+// unique marker so the payload survives any incidental stdout (Pyodide /
+// pyspark-connect-web warnings printed before or after the result).
+const PCW_MARK = "<<<__SCX_PCW__>>>";
+
 /**
  * Build a Python snippet that safely passes `args` into a module-level
- * function call via base64-encoded JSON.
+ * function call via base64-encoded JSON, then PRINTS the function's JSON
+ * result bracketed by PCW_MARK so the host can recover it from stdout:
  *
  *   __pcw_args = __json.loads(__b64.b64decode("<b64>").decode())
- *   <fn>(*__pcw_args)
+ *   __pcw_out = <fn>(*__pcw_args)
+ *   print(MARK + __pcw_out + MARK, end="")
  *
  * Base64-encoding the JSON payload completely eliminates any risk of the
  * argument content (e.g. SQL with triple-quotes or backslashes) breaking
@@ -53,11 +62,28 @@ function utf8ToBase64(str: string): string {
 function callPy(fn: string, ...args: unknown[]): string {
   const argsJson = JSON.stringify(args);
   const argsB64 = utf8ToBase64(argsJson);
+  const mark = JSON.stringify(PCW_MARK);
   return [
     `import json as __json, base64 as __b64`,
     `__pcw_args = __json.loads(__b64.b64decode(${JSON.stringify(argsB64)}).decode())`,
-    `${fn}(*__pcw_args)`,
+    `__pcw_out = ${fn}(*__pcw_args)`,
+    `print(${mark} + (__pcw_out if isinstance(__pcw_out, str) else __json.dumps(__pcw_out)) + ${mark}, end="")`,
   ].join("\n");
+}
+
+/**
+ * Recover the JSON payload from the worker's captured stdout. When the snippet
+ * printed the PCW_MARK-bracketed payload, return exactly what is between the
+ * markers (discarding any incidental stdout outside them). When no marker is
+ * present (e.g. unit tests feeding canned JSON directly), fall back to the
+ * trimmed raw string so callers stay backward compatible.
+ */
+function extractPayload(raw: string): string {
+  const first = raw.indexOf(PCW_MARK);
+  if (first === -1) return raw.trim();
+  const second = raw.indexOf(PCW_MARK, first + PCW_MARK.length);
+  if (second === -1) return raw.trim();
+  return raw.slice(first + PCW_MARK.length, second);
 }
 
 // ---------------------------------------------------------------------------
@@ -149,7 +175,7 @@ export class SparkBridgeHost implements SparkBridge {
 
     const snippet = callPy("connect", uri, token);
     const raw = await this._host.runPython(snippet);
-    parseConnectResult(raw);
+    parseConnectResult(extractPayload(raw));
     this._connected = true;
     this._lastConnectUri = uri;
     this._lastConnectToken = token;
@@ -163,7 +189,7 @@ export class SparkBridgeHost implements SparkBridge {
     await this.ensureReady();
     const snippet = callPy("run_sql", sql, rowCap);
     const raw = await this._host.runPython(snippet);
-    return parseResult(raw);
+    return parseResult(extractPayload(raw));
   }
 
   // -------------------------------------------------------------------------
@@ -174,7 +200,7 @@ export class SparkBridgeHost implements SparkBridge {
     await this.ensureReady();
     const snippet = callPy("schema_of", sql);
     const raw = await this._host.runPython(snippet);
-    return parseSchema(raw);
+    return parseSchema(extractPayload(raw));
   }
 
   // -------------------------------------------------------------------------

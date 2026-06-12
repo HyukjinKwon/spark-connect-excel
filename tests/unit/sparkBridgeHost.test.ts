@@ -140,6 +140,44 @@ describe("SparkBridgeHost — connect", () => {
   });
 });
 
+describe("SparkBridgeHost — stdout marker payload (worker contract)", () => {
+  // The real worker captures stdout, so callPy PRINTs its JSON bracketed by a
+  // unique marker. Simulate that here (with incidental warnings around it) to
+  // prove the host recovers the payload and not the noise. This is the exact
+  // failure that left the demo stuck at "Unexpected end of JSON input".
+  const MARK = "<<<__SCX_PCW__>>>";
+
+  class MarkerHost extends FakeRuntimeHost {
+    override async runPython(src: string): Promise<string> {
+      this.runCalls.push(src);
+      const wrap = (json: string) => `some pyodide warning\n${MARK}${json}${MARK}`;
+      if (src.includes("run_sql(")) return wrap(this.runSqlResponse);
+      if (src.includes("schema_of(")) return wrap(this.schemaResponse);
+      if (src.includes("connect(")) return wrap(this.connectResponse);
+      return '"ok"';
+    }
+  }
+
+  it("recovers connect()/run_sql() JSON from marker-bracketed stdout with noise", async () => {
+    const host = new MarkerHost();
+    const bridge = new SparkBridgeHost(host);
+    await bridge.connect("sc://localhost:8081/;transport=grpcweb");
+    expect(bridge.status().connected).toBe(true);
+    const result = await bridge.runSQL("SELECT 1", 10);
+    expect(result).toEqual(SAMPLE_RESULT);
+  });
+
+  it("still surfaces a Python error envelope when marker-wrapped", async () => {
+    const host = new MarkerHost();
+    host.runSqlResponse = JSON.stringify({
+      ok: false,
+      error: { name: "AnalysisException", message: "boom" },
+    });
+    const bridge = new SparkBridgeHost(host);
+    await expect(bridge.runSQL("SELECT 1", 10)).rejects.toThrow("AnalysisException: boom");
+  });
+});
+
 describe("SparkBridgeHost — ensureReady retry after failure (B-4)", () => {
   it("resets _bootPromise on failure so a later call can retry", async () => {
     let failCount = 0;
