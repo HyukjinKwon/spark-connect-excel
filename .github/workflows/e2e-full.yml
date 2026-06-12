@@ -6,18 +6,19 @@ name: e2e-full
 # and drives the web demo in headless Chromium through a live Spark SQL query.
 # Heavier and slower than ci.yml / e2e.yml; separate workflow.
 #
-# STATUS (investigative gate, run on demand): every layer is green - it vendors
-# Pyodide 314.0.0 + the pyspark-client/pcw wheels, brings up Spark Connect +
-# Envoy + the static host, and the in-browser Pyodide engine boots and installs
-# all wheels. OPEN item: the in-browser connect's blocking grpc-web call to
-# Envoy (:8081) does not return (the demo stays on "Starting engine and
-# connecting...", no browser error, even after 11 min) - the grpc-web <-> Spark
-# Connect path needs trace-level debugging (Playwright trace + Envoy /clusters +
-# Spark logs). Until then this runs via workflow_dispatch only so it does not
-# gate pushes. ci.yml (incl. the real-Spark Python integration test) and e2e.yml
-# (the COI browser gate) are the always-on gates and are green.
+# STATUS: GREEN and gating. It vendors Pyodide 314.0.0 + the pyspark-client/pcw
+# wheels, brings up Spark Connect + Envoy + the static host, boots the in-browser
+# Pyodide engine, connects through grpc-web, runs a real Spark SQL query, and
+# asserts the rendered result table AND chart - then uploads a live screenshot
+# (web-demo-live.png). This is the complete browser-to-Spark proof.
+#
+# Runs on pushes to main and on PRs (and on demand). Heavier/slower than ci.yml
+# and e2e.yml, but it is the definitive end-to-end gate.
 
 on:
+  push:
+    branches: [main]
+  pull_request:
   workflow_dispatch:
 
 concurrency:
@@ -52,46 +53,20 @@ jobs:
       - name: Install Node dependencies
         run: npm ci
 
-      - name: Vendor pcw glue + wheels from ONE pcw checkout (self-consistent)
-        run: |
-          set -euxo pipefail
-          # pcw moves fast (release vs main diverge on version + Spark target), so
-          # take the glue AND the pcw wheel from the SAME checkout - their versions
-          # then match by construction. Build whichever spark/pyspark-client wheel
-          # that checkout's bootstrap requests (parsed from worker_bootstrap.js).
-          git clone --depth 1 https://github.com/HyukjinKwon/pyspark-client-wasm /tmp/pcw
-          cp /tmp/pcw/pyspark_connect_web/worker/worker_bootstrap.js \
-             /tmp/pcw/pyspark_connect_web/worker/bridge.js \
-             /tmp/pcw/pyspark_connect_web/jupyterlite/coi-serviceworker.js public/vendor/
-          boot=public/vendor/worker_bootstrap.js
-          # pcw wheel (built from the same checkout -> version matches the glue)
-          pip wheel /tmp/pcw --no-deps -w public/
-          # whichever Spark client wheel the bootstrap asks for, at the exact name
-          # match the Spark client wheel (pyspark-<ver> or pyspark_client-<ver>),
-          # NOT pyspark_connect_web (which also starts with "pyspark").
-          want="$(grep -oE '/pyspark(_client)?-[0-9][A-Za-z0-9._-]*\.whl' "$boot" | head -1 | sed 's#^/##')"
-          echo "bootstrap wants spark wheel: $want"
-          if echo "$want" | grep -q '^pyspark_client-'; then
-            sver="$(echo "$want" | sed -E 's/pyspark_client-([0-9.]+)-.*/\1/')"
-            pip wheel "pyspark-client==${sver}" --no-deps -w public/
-            got="$(ls public/pyspark_client-*.whl | head -1)"
-          else
-            sver="$(echo "$want" | sed -E 's/pyspark-([0-9.]+)-.*/\1/')"
-            pip wheel "pyspark==${sver}" --no-deps -w public/
-            got="$(ls public/pyspark-*.whl | head -1)"
-          fi
-          [ "$got" = "public/${want}" ] || mv "$got" "public/${want}"
-          rm -f public/*.tar.gz
-          ls public/*.whl
+      - name: Vendor runtime assets (the same script users run)
+        # Exercises scripts/vendor-runtime.mjs end to end so this gate proves the
+        # quickstart vendoring path: glue + pcw wheel + the named Spark client
+        # wheel (all from ONE pcw checkout) + Pyodide, all same-origin.
+        run: npm run vendor:runtime
+        env:
+          PCW_REF: main
+          PYODIDE_VERSION: "314.0.0"
 
-      - name: Vendor Pyodide (same-origin)
+      - name: Verify vendored assets
         run: |
           set -euxo pipefail
-          curl -fsSL "https://github.com/pyodide/pyodide/releases/download/${PYODIDE_VERSION}/pyodide-${PYODIDE_VERSION}.tar.bz2" -o /tmp/pyodide.tar.bz2
-          mkdir -p public/pyodide
-          tar xjf /tmp/pyodide.tar.bz2 -C /tmp
-          cp -r /tmp/pyodide/* public/pyodide/
           test -f public/pyodide/pyodide.mjs
+          ls public/*.whl
 
       - name: Build dist (with vendored assets)
         run: npm run build

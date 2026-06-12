@@ -27,27 +27,30 @@ documented in pyspark-connect-web). These assets are version-matched to
 pyspark-connect-web's own build and vendored into `public/` (git-ignored - they
 are large):
 
-As of release v0.1.0:
+These are the exact assets the end-to-end CI gate vendors (from pcw `main`,
+currently 0.2.0):
 
 | Asset (served at site root) | What | Override global |
 |-----------------------------|------|-----------------|
-| `/pyodide/` (`pyodide.mjs`) | Pyodide distribution | `PCW_PYODIDE_INDEX_URL` |
+| `/pyodide/` (`pyodide.mjs`) | Pyodide distribution (314.0.0) | `PCW_PYODIDE_INDEX_URL` |
 | `/pyspark_client-4.1.2-py3-none-any.whl` | Spark Connect client wheel | `PCW_PYSPARK_WHEEL_URL` |
-| `/pyspark_connect_web-0.1.0-py3-none-any.whl` | the pcw wheel (also on PyPI) | `PCW_WHEEL_URL` |
+| `/pyspark_connect_web-0.2.0-py3-none-any.whl` | the pcw wheel (also on PyPI) | `PCW_WHEEL_URL` |
 
 `micropip` still fetches the small pure deps (`protobuf`,
 `googleapis-common-protos`, etc.) from PyPI at runtime. **Version constraint:**
-`pyspark>=4.0,<4.2` (enforced by `pcw.install()`).
+`pyspark>=4.0,<4.2` (enforced by `pcw.install()`). The 4.1.2 client talks to a
+Spark Connect 4.0.0 server (what `deploy/compose.yaml` runs) - proven by the e2e.
 
-Run `npm run vendor:runtime` (see `scripts/vendor-runtime.mjs`) to fetch the
-release glue + the pcw wheel into `public/`; it prints the remaining steps for
-Pyodide and the `pyspark-client` wheel (version-matched to the release). Vite
-copies `public/` into `dist/`. These assets are git-ignored
-(`public/pyodide/`, `public/*.whl`). To host them elsewhere (same-origin),
-override the globals above, e.g.:
+Run `npm run vendor:runtime` (see `scripts/vendor-runtime.mjs`). It does the
+whole job: clones pcw (`PCW_REF`, default `main`) once, copies the glue, builds
+the pcw wheel AND the Spark client wheel the bootstrap names, and fetches Pyodide
+(`PYODIDE_VERSION`, default 314.0.0) - all into `public/`. Vite copies `public/`
+into `dist/`. These assets are git-ignored (`public/pyodide/`, `public/*.whl`).
+Requires `git`, `python3`+`pip`, `curl`, `tar`. To host them elsewhere
+(same-origin), override the globals above, e.g.:
 
 ```ts
-await host.boot({ wheelUrl: "/cdn/pyspark_connect_web-0.1.0-py3-none-any.whl" });
+await host.boot({ wheelUrl: "/cdn/pyspark_connect_web-0.2.0-py3-none-any.whl" });
 ```
 
 ### 2. Browser JS glue files (copied into `public/vendor/`)
@@ -68,14 +71,17 @@ upstream provenance.
 
 ## Pinned upstream version
 
-The vendor files were copied from pyspark-connect-web at:
+The vendor files are taken from pyspark-connect-web at:
 
 > **Upstream repository:** https://github.com/HyukjinKwon/pyspark-client-wasm  
-> **Release:** `v0.1.0` - glue + pcw wheel taken from the
-> `pyspark-connect-web-site-0.1.0.tgz` release asset (re-synced 2026-06-12).
+> **Ref:** `main` (currently 0.2.0) - the glue + the pcw wheel come from the
+> SAME checkout (so their versions match), and the Spark client wheel is the one
+> the bootstrap names (`pyspark_client-4.1.2`). This is exactly what the
+> end-to-end CI gate vendors and proves.
 
-Re-sync the vendor glue (and the same-origin asset versions) when a new release
-ships.
+Re-sync with `npm run vendor:runtime` (set `PCW_REF` to pin a different
+ref/tag). The committed `public/vendor/` glue should be re-synced when it
+changes; the wheels and Pyodide are vendored on demand and git-ignored.
 
 ---
 

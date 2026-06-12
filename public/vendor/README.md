@@ -15,10 +15,10 @@ here - fix upstream and re-copy.
 
 The dialog host (`src/dialog/`) drives `worker_bootstrap.js` directly. By
 default the bootstrap loads Pyodide + the wheels **same-origin** (`/pyodide/`,
-`/pyspark_client-4.1.2-py3-none-any.whl`, `/pyspark_connect_web-0.1.0-py3-none-any.whl`)
+`/pyspark_client-4.1.2-py3-none-any.whl`, `/pyspark_connect_web-0.2.0-py3-none-any.whl`)
 - a CDN does not work under COI. Those large assets are git-ignored and vendored
 separately (see `docs/reuse.md`); `src/runtime/pyodideHost.ts` only injects
 `self.PCW_PYODIDE_INDEX_URL` / `self.PCW_WHEEL_URL` when explicitly overridden.
 
-Re-synced from release `v0.1.0` (2026-06-12); re-copy and update the pin in
-`docs/reuse.md` when a new release ships.
+Synced from pyspark-connect-web `main` (0.2.0). Re-sync with
+`npm run vendor:runtime`; this is the exact glue the end-to-end CI gate uses.

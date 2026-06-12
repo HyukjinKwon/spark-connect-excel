@@ -19,9 +19,9 @@ entirely in-browser via
 [full documentation](https://hyukjinkwon.github.io/spark-connect-excel/).
 
 <p align="center">
-  <img src="docs/screenshots/web-demo.png" alt="The Spark Connect web demo: connection form and a SQL editor with syntax highlighting." width="820" />
+  <img src="docs/screenshots/web-demo-live.png" alt="The web demo connected to a live Spark Connect server, running a Spark SQL query and rendering the result as a table and a bar chart." width="820" />
   <br/>
-  <em>The web demo - Spark SQL with syntax highlighting.</em>
+  <em>A live Spark SQL query in the browser - real result table and chart, connected to a Spark Connect server. Captured by the end-to-end CI run.</em>
 </p>
 
 ## Features

@@ -17,3 +17,6 @@ __pycache__/
 # fetched at setup, not committed). See docs/reuse.md.
 public/pyodide/
 public/*.whl
+
+# Temp checkout used by scripts/vendor-runtime.mjs.
+.vendor-tmp/
