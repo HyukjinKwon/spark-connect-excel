@@ -2,34 +2,26 @@
 
 # Distribution
 
-## Two distribution paths
+This page is about getting **this add-in** to your own users - hosting the
+static bundle and sideloading it. It is not a template or guide for publishing
+other packages.
 
-### 1. Sideload (developer / self-hosted / private team)
+## How it's distributed
 
-Sideloading installs the add-in directly from a manifest URL without going
-through AppSource. It is the recommended path for:
+The add-in is distributed by **sideloading** - installing it directly from a
+manifest, no add-in store involved. It is the path for:
 
 - Development and testing
 - Private team deployments
-- IT-managed enterprise rollouts via Centralized Deployment
+- IT-managed enterprise rollouts via Centralized Deployment (below)
 
-See `scripts/sideload.md` and `docs/installation.md` for step-by-step instructions.
-
-### 2. AppSource (public distribution)
-
-AppSource submission makes the add-in available to any Microsoft 365 user via
-**Insert > Get Add-ins**. This path requires:
-
-- A Microsoft Partner Center account
-- The add-in bundle hosted on a publicly accessible HTTPS server with the
-  correct COI headers (see below)
-- Passing Microsoft's automated and manual validation checklist
+See [installation.md](installation.md) for step-by-step instructions.
 
 ---
 
 ## Hosting requirements
 
-Whether sideloaded or AppSource-published, the add-in bundle (`dist/`) **must**
+However it is hosted, the add-in bundle (`dist/`) **must**
 be hosted with the following HTTP response headers:
 
 ```
@@ -45,11 +37,23 @@ The `deploy/` stack (static host via `halverneus/static-file-server`) sets
 these headers. For custom hosting (GitHub Pages, Azure Blob, Netlify, etc.),
 configure the headers at the CDN / edge layer.
 
-### GitHub Pages example
+### GitHub Pages
 
-GitHub Pages does not allow custom response headers for individual paths. Use a
-CDN proxy (Cloudflare Workers / AWS CloudFront custom headers policy) in front of
-GitHub Pages to inject the COI headers.
+GitHub Pages can't set response headers, so use the bundled COI **service worker**
+to inject them client-side. `public/vendor/coi-serviceworker.js` re-emits the
+page's own responses with COOP/COEP and flips `crossOriginIsolated` to true after
+a one-time automatic reload. Register it near the top of the hosted page (the
+demo page already does):
+
+```html
+<script src="/vendor/coi-serviceworker.js"></script>
+```
+
+Caveats: serve at a **root** origin (a custom domain or `https://<user>.github.io`)
+so the app's absolute asset paths (`/vendor/`, `/pyodide/`) resolve - a project
+subpath (`/<repo>/`) needs Vite `base` configured. The service worker only covers
+same-origin responses, so vendor Pyodide and the wheels same-origin (see
+[reuse.md](reuse.md)).
 
 ### Azure Static Web Apps
 
@@ -93,23 +97,17 @@ What this means for distribution:
 
 ---
 
-## AppSource submission checklist
+## Production manifest
 
-Before submitting to AppSource:
+Before hosting for others:
 
-- [ ] `manifest.xml` updated with the production `SourceLocation` URL (not
-      `https://localhost:3000`)
-- [ ] `manifest.xml` version incremented
+- [ ] `manifest.xml` `SourceLocation` points to the production origin (not
+      `https://localhost:3000`) - use `npm run build:manifest` below
+- [ ] `AppDomains` lists the production origin
 - [ ] Production bundle hosted on HTTPS with COOP/COEP headers
-- [ ] `AppDomains` in `manifest.xml` lists the production origin
-- [ ] `SupportUrl` points to a real page
-- [ ] Icon assets (`icon-16.png`, `icon-32.png`, `icon-80.png`) provided in
-      `public/assets/`
 - [ ] `office-addin-manifest validate manifest.xml` passes
-- [ ] Add-in tested on Windows (WebView2), Mac (WKWebView), and Excel on the web
-- [ ] Privacy policy URL added to `manifest.xml` (required for AppSource)
-- [ ] The manifest's `Id` GUID matches the one in source control (do not
-      regenerate - changing it breaks existing user installations)
+- [ ] Tested on a Chromium-based Excel host (Windows / Microsoft 365 or the web)
+- [ ] The manifest's `Id` GUID is unchanged (changing it breaks existing installs)
 
 ### Updating the production origin in manifest.xml
 

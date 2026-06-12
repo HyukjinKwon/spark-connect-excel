@@ -4,7 +4,11 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Spark Connect — Web Demo</title>
+    <title>Spark Connect - Web Demo</title>
+    <!-- On hosts that can't set COOP/COEP (e.g. GitHub Pages), this service
+         worker injects them and reloads once, enabling crossOriginIsolated.
+         It no-ops when the host already sends the headers (dev server, Envoy). -->
+    <script src="/vendor/coi-serviceworker.js"></script>
     <link rel="stylesheet" href="./demo.css" />
   </head>
   <body>

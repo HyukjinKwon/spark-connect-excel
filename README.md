@@ -23,7 +23,7 @@ entirely in-browser via
 [pyspark-connect-web](https://github.com/HyukjinKwon/pyspark-client-wasm)
 (real PySpark, in Pyodide).
 
-Full documentation: <https://hyukjinkwon.github.io/spark-connect-excel/>.
+Full [documentation](https://hyukjinkwon.github.io/spark-connect-excel/).
 
 ## Features
 
