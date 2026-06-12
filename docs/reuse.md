@@ -11,26 +11,39 @@ We add Office.js glue; we do not fork Spark plumbing.
 
 Two reuse mechanisms:
 
-### 1. Python wheel via micropip (runtime, no copy needed)
+### 1. Same-origin runtime assets (Pyodide + wheels)
 
-At runtime, `spark_excel_runtime.py` calls:
+At runtime, `spark_excel_runtime.py` runs inside Pyodide and calls:
 
 ```python
 import pyspark_connect_web as pcw
 pcw.install()
 ```
 
-inside Pyodide. `micropip` fetches the wheel from PyPI. No wheel file is
-checked into this repository. The pyspark-connect-web wheel bundles the real
-PySpark Connect client (Python) + the transport monkey-patch.
+The heavy runtime is served **same-origin** next to the app. A cross-origin CDN
+does NOT work: under cross-origin isolation the worker's `importScripts()` of a
+CDN Pyodide is blocked by COEP in Chromium, even with `credentialless` (this is
+documented in pyspark-connect-web). These assets are version-matched to
+pyspark-connect-web's own build and vendored into `public/` (git-ignored - they
+are large):
 
-**Version constraint:** `pyspark>=4.0,<4.2` (enforced by `pcw.install()`).
+| Asset (served at site root) | What | Override global |
+|-----------------------------|------|-----------------|
+| `/pyodide/` | Pyodide distribution | `PCW_PYODIDE_INDEX_URL` |
+| `/pyspark-4.0.0-py2.py3-none-any.whl` | PySpark wheel (sdist-only on PyPI) | `PCW_PYSPARK_WHEEL_URL` |
+| `/pyspark_connect_web-*.whl` | the pcw wheel | `PCW_WHEEL_URL` |
 
-To pin a specific pyspark-connect-web version, pass the wheel URL to
-`PyodideHost.boot()`:
+`micropip` still fetches the small pure deps (`protobuf`,
+`googleapis-common-protos`, `py4j`) from PyPI at runtime. **Version constraint:**
+`pyspark>=4.0,<4.2` (enforced by `pcw.install()`).
+
+Source these from pyspark-connect-web's built site / release so versions match,
+and place them under `public/` (Vite copies `public/` into `dist/`). They are
+git-ignored (`public/pyodide/`, `public/*.whl`). To host them elsewhere
+(same-origin), override the globals above, e.g.:
 
 ```ts
-await host.boot({ wheelUrl: "pyspark-connect-web==0.1.5" });
+await host.boot({ wheelUrl: "/cdn/pyspark_connect_web-0.1.5-py3-none-any.whl" });
 ```
 
 ### 2. Browser JS glue files (copied into `public/vendor/`)
@@ -54,7 +67,10 @@ upstream provenance.
 The vendor files were copied from pyspark-connect-web at:
 
 > **Upstream repository:** https://github.com/HyukjinKwon/pyspark-client-wasm  
-> **Commit / tag:** *(update this line when re-syncing)*
+> **Commit:** `c3fed03` (re-synced 2026-06-12)
+
+pyspark-client-wasm is actively developed; re-sync the vendor glue (and the
+same-origin asset versions) when it advances.
 
 ---
 
@@ -94,7 +110,4 @@ comment in each file covers this). This project is also Apache-2.0.
 
 ## Relationship to upstream
 
-This project is an independent Excel add-in host. It is **not** an ASF project,
-not affiliated with the pyspark-connect-web project beyond reuse, and not
-affiliated with Apache Spark or the Apache Software Foundation. See `README.md`
-for the trademark disclaimer.
+This project is an independent Excel add-in host that reuses pyspark-connect-web.

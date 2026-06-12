@@ -1,20 +1,20 @@
 // SPDX-License-Identifier: Apache-2.0
 //
-// bridge.js — main-thread half of lane 3's blocking transport.
+// bridge.js - main-thread half of lane 3's blocking transport.
 //
 // The Web Worker (running Pyodide + PySpark) cannot do `fetch` against a
 // cross-origin gRPC-web endpoint and, more importantly, cannot block on an
 // async result. So the worker writes its request into a SharedArrayBuffer and
 // parks on `Atomics.wait`. This file runs on the *main* thread, receives the
 // nudge postMessage, reads the request out of the SAB, performs the real async
-// `fetch`, and writes the response bytes back into the SAB — flipping the STATE
+// `fetch`, and writes the response bytes back into the SAB - flipping the STATE
 // control word and `Atomics.notify`-ing to wake the worker.
 //
 // The SAB layout + state machine is the authoritative contract; it is mirrored
 // in `sab_channel.py` and documented in team/findings-lane3-bridge.md. Keep the
 // three in sync by VALUE.
 //
-// Large results — bounded-window transfer
+// Large results - bounded-window transfer
 // ----------------------------------------
 // The data SAB has a fixed capacity. A single logical payload (a unary body or
 // one server-stream chunk) larger than the payload region is written in
@@ -96,12 +96,14 @@ class Bridge {
     let off = 0;
     const headerLen = this._getU32(off);
     off += 4;
-    const headerBytes = this.data.subarray(off, off + headerLen);
+    // .slice (not .subarray): TextDecoder.decode rejects a view backed by a
+    // SharedArrayBuffer ("must not be shared"); slice copies into a plain buffer.
+    const headerBytes = this.data.slice(off, off + headerLen);
     const header = JSON.parse(_dec.decode(headerBytes));
     off += headerLen;
     const bodyLen = this._getU32(off);
     off += 4;
-    // Copy the body out — the worker may overwrite the SAB once we wake it.
+    // Copy the body out - the worker may overwrite the SAB once we wake it.
     const body = this.data.slice(off, off + bodyLen);
     return { header, body };
   }
@@ -184,6 +186,7 @@ class Bridge {
     let timer = null;
     try {
       const { header, body } = this._readRequest();
+      console.log("[pcw bridge] rpc", header.kind, header.url, "body", body.length);
       const init = {
         method: "POST",
         headers: { ...header.headers },
@@ -213,7 +216,7 @@ class Bridge {
         const kind = timedOut ? "timeout" : isAbort ? "abort" : "error";
         const msg = timedOut
           ? `fetch timed out after ${header.timeout}s`
-          : `fetch failed: ${e && e.message ? e.message : e}`;
+          : `fetch failed for ${header.url}: ${e && e.message ? e.message : e}`;
         this._writeError(msg, kind);
         return;
       } finally {
@@ -235,6 +238,7 @@ class Bridge {
         /* Headers not iterable in some shims; leave empty. */
       }
 
+      console.log("[pcw bridge] resp", resp.status, "kind", header.kind);
       if (header.kind === "unary") {
         const buf = new Uint8Array(await resp.arrayBuffer());
         // One logical message, windowed if larger than the payload region.
@@ -264,15 +268,18 @@ class Bridge {
         }
         if (done) break;
         if (!value || value.length === 0) continue;
+        console.log("[pcw bridge] stream chunk", value.length);
         const metaBase = first ? { ok: resp.ok, headers } : {};
         const cont = await this._emitMessage(resp.status, metaBase, value);
         first = false;
         if (!cont) return; // worker abandoned the stream (closed / errored)
         // Wait for the worker to consume this message and request the next.
         const ack = await this._awaitWorker(S_CHUNK_ACK);
+        console.log("[pcw bridge] stream ack", ack);
         if (ack === S_IDLE) return;
       }
       // End of stream.
+      console.log("[pcw bridge] stream end (RESP_END)");
       Atomics.store(this.ctrl, C_LENGTH, 0);
       Atomics.store(this.ctrl, C_STATE, S_RESP_END);
       Atomics.notify(this.ctrl, C_STATE);

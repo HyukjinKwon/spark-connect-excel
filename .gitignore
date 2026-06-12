@@ -12,3 +12,8 @@ __pycache__/
 *.pyc
 .env
 .env.local
+
+# Same-origin runtime assets, vendored from pyspark-connect-web's build (large;
+# fetched at setup, not committed). See docs/reuse.md.
+public/pyodide/
+public/*.whl

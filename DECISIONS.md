@@ -14,16 +14,26 @@ practical. Changing one requires a note in `COORDINATION.md`.
    (via `coi-serviceworker.js`) is a runtime-detected optimization, never required.
 
 2. **COEP is `credentialless`, not `require-corp`.** This lets the dialog load
-   cross-origin Pyodide (jsDelivr) and the PyPI wheel without those origins
-   sending CORP headers. Chromium-based Excel hosts (WebView2 / Edge / Chrome)
-   support it. The dev server and the deploy static host both send
-   `COOP: same-origin` + `COEP: credentialless`. CI guards their presence.
+   the cross-origin office.js script without that origin sending CORP headers.
+   Chromium-based Excel hosts (WebView2 / Edge / Chrome) support it. The dev
+   server and the deploy static host both send `COOP: same-origin` +
+   `COEP: credentialless`. CI guards their presence. NOTE: credentialless does
+   NOT make a cross-origin CDN usable for the worker's `importScripts` of
+   Pyodide - per pyspark-connect-web that is blocked in Chromium regardless. So
+   Pyodide and the wheels are served SAME-ORIGIN (see #3).
 
-3. **We reuse pyspark-connect-web; we do not fork or vendor its Python.** The
-   wheel is consumed from PyPI via `micropip`. Only its small browser JS glue
-   (`worker_bootstrap.js`, `bridge.js`, `coi-serviceworker.js`) is copied into
-   `public/vendor/` (it must be served same-origin). Those copies carry an
-   upstream-provenance header and are not edited.
+3. **We reuse pyspark-connect-web; we do not fork it.** We consume the published
+   package and copy only its browser JS glue (`worker_bootstrap.js`, `bridge.js`,
+   `coi-serviceworker.js`) into `public/vendor/` verbatim (re-synced from upstream;
+   provenance + pinned commit in `docs/reuse.md`). The heavy runtime is served
+   **same-origin** next to the app (these come from pyspark-connect-web's build,
+   version-matched; vendored into `public/`, git-ignored - see `docs/reuse.md`):
+   - `/pyodide/` - the Pyodide distribution (a CDN does not work under COI),
+   - `/pyspark-4.0.0-py2.py3-none-any.whl` - PySpark is sdist-only on PyPI,
+   - `/pyspark_connect_web-*.whl` - the pcw wheel.
+   `micropip` still fetches the small pure deps (`protobuf`, `googleapis-common-protos`,
+   `py4j`) from PyPI at runtime. Override any URL via `self.PCW_PYODIDE_INDEX_URL` /
+   `self.PCW_PYSPARK_WHEEL_URL` / `self.PCW_WHEEL_URL`.
 
 4. **SQL is the product surface *in the Excel add-in*.** Excel users query; they
    do not author DataFrames, so the task pane exposes `runSQL` only. Pushdown is

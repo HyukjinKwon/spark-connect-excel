@@ -63,18 +63,24 @@ import { createRpc, type RpcHandle } from "./runPython.js";
  * runs. A classic Worker created from a Blob URL has the Blob as its only
  * script; the real bootstrap is pulled in via importScripts.
  */
-function buildBootstrapBlob(pyodideIndexUrl: string | undefined, wheelUrl: string): string {
-  const indexLine =
-    pyodideIndexUrl !== undefined
-      ? `self.PCW_PYODIDE_INDEX_URL = ${JSON.stringify(pyodideIndexUrl)};`
-      : "// PCW_PYODIDE_INDEX_URL not overridden — worker_bootstrap.js uses its default";
-  const wheelLine = `self.PCW_WHEEL_URL = ${JSON.stringify(wheelUrl)};`;
+function buildBootstrapBlob(
+  pyodideIndexUrl: string | undefined,
+  wheelUrl: string | undefined,
+): string {
+  // Only inject a global when explicitly overridden; otherwise worker_bootstrap.js
+  // uses its same-origin defaults (/pyodide/, /pyspark_connect_web-*.whl). Per
+  // pyspark-connect-web, Pyodide and the wheels MUST be same-origin: a cross-origin
+  // CDN is blocked by COEP for the worker's importScripts even under credentialless.
+  const line = (name: string, val: string | undefined) =>
+    val !== undefined
+      ? `self.${name} = ${JSON.stringify(val)};`
+      : `// ${name} not overridden - worker_bootstrap.js uses its same-origin default`;
 
   // importScripts path is relative to the origin (Vite serves public/ at /).
   return [
     `"use strict";`,
-    indexLine,
-    wheelLine,
+    line("PCW_PYODIDE_INDEX_URL", pyodideIndexUrl),
+    line("PCW_WHEEL_URL", wheelUrl),
     `importScripts('/vendor/worker_bootstrap.js');`,
   ].join("\n");
 }
@@ -131,9 +137,11 @@ export class PyodideHost implements RuntimeHost {
     this._booting = true;
 
     const merged: BootOptions = { ...this._defaults, ...opts };
-    // Default wheelUrl: micropip-resolvable PyPI spec (DECISIONS #3).
-    const wheelUrl = merged.wheelUrl ?? "pyspark-connect-web";
-    const pyodideIndexUrl = merged.pyodideIndexUrl; // undefined → keep worker default
+    // Leave both undefined by default so worker_bootstrap.js uses its same-origin
+    // defaults (Pyodide at /pyodide/, wheels at the site root). Only override when
+    // the caller hosts them elsewhere (same-origin).
+    const wheelUrl = merged.wheelUrl; // undefined -> worker default (same-origin wheel)
+    const pyodideIndexUrl = merged.pyodideIndexUrl; // undefined -> worker default (/pyodide/)
 
     try {
       // ---- 1. Build the Blob shim and create a classic Worker ---------------
