@@ -57,18 +57,25 @@ test.describe("full-stack: Pyodide + grpc-web + Spark Connect", () => {
       throw e;
     }
 
-    // Run a Spark SQL query through the real engine.
-    await page.locator(".code-editor__textarea").fill("SELECT 1 AS id, 'hello' AS msg");
+    // Run a real Spark SQL query that yields a multi-row, chartable result so
+    // the captured screenshot shows an actual rendered chart (category + value).
+    const sql =
+      "SELECT CONCAT('Q', CAST(id + 1 AS STRING)) AS quarter, " +
+      "CAST((id + 1) * (id + 1) * 1000 AS INT) AS revenue FROM range(0, 6)";
+    await page.locator(".code-editor__textarea").fill(sql);
     await page.getByRole("button", { name: "Run" }).click();
 
     // Result table rendered from real Spark output.
     const table = page.locator("table.demo-table");
     await expect(table).toBeVisible({ timeout: 60_000 });
-    await expect(table.locator("thead th").nth(0)).toContainText("id");
-    await expect(table.locator("thead th").nth(1)).toContainText("msg");
-    await expect(table.locator("tbody tr").nth(0).locator("td").nth(1)).toContainText("hello");
+    await expect(table.locator("thead th").nth(0)).toContainText("quarter");
+    await expect(table.locator("thead th").nth(1)).toContainText("revenue");
+    await expect(table.locator("tbody tr").nth(0).locator("td").nth(0)).toContainText("Q1");
+    // The demo renders a real SVG chart from the result (category + numeric).
+    await expect(page.locator(".demo-chart svg")).toBeVisible({ timeout: 30_000 });
 
-    // Capture a genuine screenshot of the running demo (uploaded as an artifact).
+    // Capture a genuine screenshot of the running demo (uploaded as an artifact):
+    // a live Spark SQL query with the rendered chart.
     await page.screenshot({ path: "playwright-report/web-demo-live.png", fullPage: true });
   });
 });
