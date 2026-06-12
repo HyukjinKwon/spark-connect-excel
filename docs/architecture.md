@@ -101,28 +101,28 @@ TypeScript only `JSON.parse`s it. No ad-hoc type coercion straddles the boundary
 
 ## Component inventory
 
-| Module | Location | Lane | Role |
-|--------|----------|------|------|
-| Task pane HTML/TS | `src/taskpane/` | E | UI: connection, SQL editor, run/refresh/chart |
-| Dialog HTML | `src/dialog/dialog.html` | B | COI host window page |
-| COI helper | `src/dialog/coi.ts` | B | `ensureCrossOriginIsolated()` |
-| Dialog host | `src/dialog/dialogHost.ts` | B | Boots runtime, dispatches bridge messages |
-| Pyodide host | `src/runtime/pyodideHost.ts` | C | Web Worker + SAB bridge wiring |
-| Run Python RPC | `src/runtime/runPython.ts` | C | pcw_run / pcw_result protocol |
-| SparkBridgeHost | `src/bridge/sparkBridgeHost.ts` | D | Dialog-side SparkBridge impl |
-| SparkBridgeClient | `src/bridge/sparkBridgeClient.ts` | D | Task-pane-side SparkBridge impl |
-| Marshal helpers | `src/bridge/marshal.ts` | D | Parse JSON from Python runtime |
-| Python runtime | `python/spark_excel_runtime.py` | D | connect / run_sql / schema_of |
-| Range writer | `src/excel/rangeWriter.ts` | F | SparkResult -> worksheet range |
-| Type formatter | `src/excel/typeFormat.ts` | F | Spark types -> Excel number formats |
-| Binding | `src/excel/binding.ts` | G | Query->range persistence |
-| Refresh | `src/excel/refresh.ts` | G | Re-run query, rewrite range |
-| Charting | `src/excel/chart.ts` | H | inferChartType + insertChart |
-| Connection store | `src/connection/connectionStore.ts` | I | URI builder, token handling |
-| Connection form | `src/connection/connectionForm.ts` | I | DOM form helpers |
-| Deploy stack | `deploy/` | I | Envoy + Spark Docker Compose |
-| pcw vendor files | `public/vendor/` | integrator | worker_bootstrap, bridge, coi-sw |
-| Seam (frozen) | `src/seam.ts` | integrator | SparkBridge interface + message types |
+| Module | Location | Role |
+|--------|----------|------|
+| Task pane HTML/TS | `src/taskpane/` | UI: connection, SQL editor, run/refresh/chart |
+| Dialog HTML | `src/dialog/dialog.html` | COI host window page |
+| COI helper | `src/dialog/coi.ts` | `ensureCrossOriginIsolated()` |
+| Dialog host | `src/dialog/dialogHost.ts` | Boots runtime, dispatches bridge messages |
+| Pyodide host | `src/runtime/pyodideHost.ts` | Web Worker + SAB bridge wiring |
+| Run Python RPC | `src/runtime/runPython.ts` | pcw_run / pcw_result protocol |
+| SparkBridgeHost | `src/bridge/sparkBridgeHost.ts` | Dialog-side SparkBridge impl |
+| SparkBridgeClient | `src/bridge/sparkBridgeClient.ts` | Task-pane-side SparkBridge impl |
+| Marshal helpers | `src/bridge/marshal.ts` | Parse JSON from Python runtime |
+| Python runtime | `python/spark_excel_runtime.py` | connect / run_sql / schema_of |
+| Range writer | `src/excel/rangeWriter.ts` | SparkResult -> worksheet range |
+| Type formatter | `src/excel/typeFormat.ts` | Spark types -> Excel number formats |
+| Binding | `src/excel/binding.ts` | Query->range persistence |
+| Refresh | `src/excel/refresh.ts` | Re-run query, rewrite range |
+| Charting | `src/excel/chart.ts` | inferChartType + insertChart |
+| Connection store | `src/connection/connectionStore.ts` | URI builder, token handling |
+| Connection form | `src/connection/connectionForm.ts` | DOM form helpers |
+| Deploy stack | `deploy/` | Envoy + Spark Docker Compose |
+| pcw vendor files | `public/vendor/` | worker_bootstrap, bridge, coi-sw |
+| Seam (frozen) | `src/seam.ts` | SparkBridge interface + message types |
 
 ---
 
@@ -166,9 +166,6 @@ bindingStore.saveQueryBinding(q)  ->  document settings
 
 ## See also
 
-- `DECISIONS.md` - all architectural invariants
-- `API_CONTRACT.md` - the frozen SparkBridge seam
-- `docs/security.md` - threat model and token handling
-- `docs/reuse.md` - pyspark-connect-web provenance
-- `docs/installation.md` - how to build, dev, and sideload
-- `deploy/README.md` - Spark + Envoy stack
+- [Security](security.md) - threat model and token handling
+- [Dependency reuse](reuse.md) - pyspark-connect-web provenance
+- [Installation](installation.md) - build, dev, and sideload

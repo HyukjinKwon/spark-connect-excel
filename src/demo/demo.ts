@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
 //
-// demo.ts — standalone, zero-install web demo of Spark Connect in the browser.
+// demo.ts - standalone, zero-install web demo of Spark Connect in the browser.
 //
 // Unlike the Excel add-in, this page has no Office host: it instantiates the
 // runtime (Lane C PyodideHost) + the bridge (Lane D SparkBridgeHost) directly
 // and renders results into an HTML table. It exposes BOTH:
-//   - SQL mode    — bridge.runSQL(sql, cap) -> rich result table
-//   - Python mode — host.runPython(code) -> real PySpark, `spark` pre-bound
+//   - SQL mode    - bridge.runSQL(sql, cap) -> rich result table
+//   - Python mode - host.runPython(code) -> real PySpark, `spark` pre-bound
 //
 // Requires the page to be cross-origin isolated (served with COOP/COEP) so the
-// SharedArrayBuffer bridge works — exactly like the dialog host.
+// SharedArrayBuffer bridge works - exactly like the dialog host.
 
 import { PyodideHost } from "../runtime/pyodideHost";
 import { SparkBridgeHost } from "../bridge/sparkBridgeHost";
@@ -47,16 +47,16 @@ function boot(): void {
   if (!app) return;
   app.replaceChildren();
 
-  // ── Header
+  // -- Header
   app.append(
     el("div", { className: "demo-header" }, [
-      el("div", { className: "demo-header__logo", textContent: "⚡" }),
-      el("span", { className: "demo-header__title", textContent: "Spark Connect — Web Demo" }),
+      el("div", { className: "demo-header__logo", textContent: "S" }),
+      el("span", { className: "demo-header__title", textContent: "Spark Connect - Web Demo" }),
     ]),
     el("p", {
       className: "demo-sub",
       textContent:
-        "Run Spark SQL or PySpark against your own Spark Connect cluster — entirely " +
+        "Run Spark SQL or PySpark against your own Spark Connect cluster - entirely " +
         "in your browser, no backend. Powered by pyspark-connect-web.",
     }),
   );
@@ -73,7 +73,7 @@ function boot(): void {
     return;
   }
 
-  // ── Connection card
+  // -- Connection card
   const cHost = el("input", { value: "localhost", size: 16 }) as HTMLInputElement;
   const cPort = el("input", { value: "8081", size: 6, type: "number" }) as HTMLInputElement;
   const cTls = el("input", { type: "checkbox" }) as HTMLInputElement;
@@ -104,7 +104,7 @@ function boot(): void {
     ]),
   );
 
-  // ── Query card (mode toggle + editor + run)
+  // -- Query card (mode toggle + editor + run)
   const sqlBtn = el("button", {
     className: "demo-btn-secondary",
     textContent: "SQL",
@@ -120,7 +120,7 @@ function boot(): void {
   const capWrap = el("input", { type: "number", value: "1000", size: 6 }) as HTMLInputElement;
   const runBtn = el("button", {
     className: "demo-btn-primary",
-    textContent: "▶ Run",
+    textContent: "Run",
   }) as HTMLButtonElement;
   const runStatus = el("div", { className: "demo-status" });
   const results = el("div", {});
@@ -154,7 +154,7 @@ function boot(): void {
   );
   setMode("sql");
 
-  // ── Wiring
+  // -- Wiring
   function busy(b: boolean, statusEl: HTMLElement, msg = ""): void {
     runBtn.disabled = b;
     connectBtn.disabled = b;
@@ -167,7 +167,7 @@ function boot(): void {
   }
 
   connectBtn.onclick = async () => {
-    busy(true, connStatus, "Starting engine and connecting… (first run downloads Pyodide)");
+    busy(true, connStatus, "Starting engine and connecting... (first run downloads Pyodide)");
     try {
       const uri = buildRemoteUri({
         host: cHost.value.trim(),
@@ -176,7 +176,7 @@ function boot(): void {
       });
       await bridge.connect(uri, cToken.value ? { token: cToken.value } : undefined);
       connected = true;
-      connStatus.textContent = `Connected — ${uri}`;
+      connStatus.textContent = `Connected - ${uri}`;
     } catch (err) {
       fail(connStatus, err);
     } finally {
@@ -188,7 +188,7 @@ function boot(): void {
   runBtn.onclick = async () => {
     const src = editor.value.trim();
     if (!src) return;
-    busy(true, runStatus, "Running…");
+    busy(true, runStatus, "Running...");
     try {
       if (mode === "sql") {
         const cap = Number(capWrap.value) || 1000;

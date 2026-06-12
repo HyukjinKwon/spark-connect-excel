@@ -10,15 +10,9 @@
 **Power Query, but the engine is your Spark cluster.**
 
 <p align="center">
-  <img src="docs/demo.svg" alt="Spark Connect for Excel: write Spark SQL in the task pane, run it, and results land in the grid with a chart - no backend server." width="900" />
+  <img src="docs/screenshots/web-demo.png" alt="The web demo: connect, run Spark SQL or PySpark, results as a typed table." width="820" />
   <br/>
-  <em>Spark SQL and PySpark run in your browser; results land in the grid and a native chart is drawn.</em>
-</p>
-
-<p align="center">
-  <img src="docs/screenshots/web-demo.png" alt="The web demo: connect, run Spark SQL, results land in a typed table." width="820" />
-  <br/>
-  <em>The zero-install web demo (real UI): connect, run Spark SQL or PySpark, results render as a typed table.</em>
+  <em>The web demo: a Spark SQL query and its result.</em>
 </p>
 
 An Excel add-in that runs a Spark SQL query against your own
@@ -28,6 +22,8 @@ charts it - with **no backend server of its own**. The query client runs
 entirely in-browser via
 [pyspark-connect-web](https://github.com/HyukjinKwon/pyspark-client-wasm)
 (real PySpark, in Pyodide).
+
+Full documentation: <https://hyukjinkwon.github.io/spark-connect-excel/>.
 
 ## Features
 
@@ -134,12 +130,6 @@ manifest (`npm run build:manifest -- --origin https://your-host`), and share tha
 `manifest.xml`. See [docs/distribution.md](docs/distribution.md).
 
 Full installation guide: [docs/installation.md](docs/installation.md)
-
-## Documentation
-
-Full documentation - installation, usage, architecture, security, and
-distribution - is on the docs site:
-**<https://hyukjinkwon.github.io/spark-connect-excel/>**.
 
 ## Compatibility
 
