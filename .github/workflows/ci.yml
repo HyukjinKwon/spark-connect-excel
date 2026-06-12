@@ -102,3 +102,31 @@ jobs:
       - name: COI header guard (vite.config.ts + deploy/)
         shell: bash
         run: bash scripts/check-coi-headers.sh
+
+  integration:
+    name: Integration (real Spark Connect server)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "17"
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # pyspark[connect] bundles the Spark jars + the gRPC client; the test
+      # starts an in-process Spark Connect server via builder.remote("local[*]")
+      # and drives spark_excel_runtime's run_sql/schema_of against it. No browser,
+      # no Envoy, no pyspark-connect-web (the test bypasses connect()).
+      - name: Install PySpark (with Connect)
+        run: pip install "pyspark[connect]==4.0.0" pandas pyarrow pytest
+
+      - name: Runtime integration e2e (real Spark Connect)
+        run: python -m pytest tests/integration -q

@@ -131,17 +131,10 @@ Full installation guide: [docs/installation.md](docs/installation.md)
 
 ## Powered by pyspark-connect-web
 
-The Spark plumbing is provided by
-[pyspark-connect-web](https://github.com/HyukjinKwon/pyspark-client-wasm) -
-the real PySpark Connect Python client running in-browser via Pyodide, with a
-grpc-web transport patch and a `SharedArrayBuffer`-based blocking bridge.
-
-We reuse it without forking:
-- The Python wheel is fetched from PyPI at runtime via `micropip`.
-- Three small browser JS glue files (`worker_bootstrap.js`, `bridge.js`,
-  `coi-serviceworker.js`) are copied verbatim into `public/vendor/`.
-
-See [docs/reuse.md](docs/reuse.md) for provenance and re-sync instructions.
+The Spark plumbing (real PySpark Connect client, in-browser via Pyodide) comes
+from [pyspark-connect-web](https://github.com/HyukjinKwon/pyspark-client-wasm),
+reused without forking. See [docs/reuse.md](docs/reuse.md) for what we vendor and
+how to re-sync.
 
 ## Documentation
 
