@@ -33,6 +33,8 @@ entirely in-browser via
 - **Native charts** — auto-inferred chart type (line for time-series, column for categories, scatter for numeric pairs).
 - **No backend** — compute runs on your Spark cluster; the add-in is static HTML/JS.
 - **Secure token handling** — bearer tokens never touch a cell or the workbook file.
+- **Zero-install web demo** — a standalone page (`/demo`) that runs **SQL _or_ PySpark**
+  in the browser, no Excel required — the easiest way to try it.
 
 ---
 
@@ -85,6 +87,22 @@ npm run dev:https                      # serves https://localhost:3000 (COI head
 docker compose -f deploy/compose.yaml up
 # Wait ~60s for Spark Connect to become healthy
 ```
+
+### Try it without Excel — the web demo
+
+The lowest-friction way to try Spark-in-the-browser: open
+`https://localhost:3000/demo/demo.html` (with `npm run dev:https` running). It's
+a standalone page — **no Excel, no sideload** — with a connection form and a
+**SQL / Python** toggle:
+
+- **SQL mode** → results render as a typed table.
+- **Python mode** → run real PySpark (`spark.range(10).filter("id % 2 = 0").toPandas()`);
+  `spark` is the connected session.
+
+To host it for others, build (`npm run build`) and deploy `dist/` to a static host
+that sets COI headers. `dist/_headers` (Netlify / Cloudflare Pages) and
+`dist/staticwebapp.config.json` (Azure Static Web Apps) are included and set them
+for you.
 
 ### Install into Excel (sideload)
 

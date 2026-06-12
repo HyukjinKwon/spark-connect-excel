@@ -1,0 +1,6 @@
+# SPDX-License-Identifier: Apache-2.0
+# Cross-origin isolation for SharedArrayBuffer (Netlify / Cloudflare Pages).
+# Copied into dist/ at build; applied by the host to every served path.
+/*
+  Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Embedder-Policy: credentialless

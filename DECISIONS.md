@@ -25,9 +25,12 @@ practical. Changing one requires a note in `COORDINATION.md`.
    `public/vendor/` (it must be served same-origin). Those copies carry an
    upstream-provenance header and are not edited.
 
-4. **SQL is the product surface; the Python API is not exposed in v0.** Excel
-   users query; they do not author DataFrames. `runSQL` is the one compute entry
-   point. Pushdown is the norm — bring back the small aggregated result.
+4. **SQL is the product surface *in the Excel add-in*.** Excel users query; they
+   do not author DataFrames, so the task pane exposes `runSQL` only. Pushdown is
+   the norm — bring back the small aggregated result. The standalone **web demo**
+   (`src/demo/`) is developer-facing and intentionally exposes **both** SQL and a
+   Python mode (`host.runPython`, `spark` pre-bound) — that surface showcases the
+   full PySpark client. The Excel add-in stays SQL-first.
 
 5. **Results are row-capped Excel-side (default 10k).** `runSQL` runs
    `.limit(cap + 1)`; a returned `cap + 1`th row sets `truncated = true` and is

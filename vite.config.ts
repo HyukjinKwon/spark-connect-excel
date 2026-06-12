@@ -54,6 +54,7 @@ export default defineConfig(async () => {
         input: {
           taskpane: resolve(__dirname, "src/taskpane/taskpane.html"),
           dialog: resolve(__dirname, "src/dialog/dialog.html"),
+          demo: resolve(__dirname, "src/demo/demo.html"),
         },
       },
     },

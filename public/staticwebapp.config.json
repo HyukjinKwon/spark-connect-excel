@@ -1,0 +1,7 @@
+{
+  "$comment": "SPDX-License-Identifier: Apache-2.0 — Azure Static Web Apps: cross-origin isolation for SharedArrayBuffer.",
+  "globalHeaders": {
+    "Cross-Origin-Opener-Policy": "same-origin",
+    "Cross-Origin-Embedder-Policy": "credentialless"
+  }
+}
