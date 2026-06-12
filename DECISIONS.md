@@ -28,9 +28,9 @@ practical. Changing one requires a note in `COORDINATION.md`.
    provenance + pinned commit in `docs/reuse.md`). The heavy runtime is served
    **same-origin** next to the app (these come from pyspark-connect-web's build,
    version-matched; vendored into `public/`, git-ignored - see `docs/reuse.md`):
-   - `/pyodide/` - the Pyodide distribution (a CDN does not work under COI),
-   - `/pyspark-4.0.0-py2.py3-none-any.whl` - PySpark is sdist-only on PyPI,
-   - `/pyspark_connect_web-*.whl` - the pcw wheel.
+   - `/pyodide/` - the Pyodide distribution (`pyodide.mjs`; a CDN does not work under COI),
+   - `/pyspark_client-4.1.2-py3-none-any.whl` - the Spark Connect client wheel,
+   - `/pyspark_connect_web-0.1.0-py3-none-any.whl` - the pcw wheel (also on PyPI).
    `micropip` still fetches the small pure deps (`protobuf`, `googleapis-common-protos`,
    `py4j`) from PyPI at runtime. Override any URL via `self.PCW_PYODIDE_INDEX_URL` /
    `self.PCW_PYSPARK_WHEEL_URL` / `self.PCW_WHEEL_URL`.

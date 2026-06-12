@@ -23,6 +23,7 @@
     "test:e2e": "playwright test --config tests/e2e/playwright.config.ts",
     "test:e2e:coi": "playwright test coi.spec.ts --config tests/e2e/playwright.config.ts",
     "build:manifest": "node scripts/build-manifest.mjs",
+    "vendor:runtime": "node scripts/vendor-runtime.mjs",
     "validate": "office-addin-manifest validate manifest.xml"
   },
   "devDependencies": {

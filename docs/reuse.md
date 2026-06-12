@@ -27,23 +27,27 @@ documented in pyspark-connect-web). These assets are version-matched to
 pyspark-connect-web's own build and vendored into `public/` (git-ignored - they
 are large):
 
+As of release v0.1.0:
+
 | Asset (served at site root) | What | Override global |
 |-----------------------------|------|-----------------|
-| `/pyodide/` | Pyodide distribution | `PCW_PYODIDE_INDEX_URL` |
-| `/pyspark-4.0.0-py2.py3-none-any.whl` | PySpark wheel (sdist-only on PyPI) | `PCW_PYSPARK_WHEEL_URL` |
-| `/pyspark_connect_web-*.whl` | the pcw wheel | `PCW_WHEEL_URL` |
+| `/pyodide/` (`pyodide.mjs`) | Pyodide distribution | `PCW_PYODIDE_INDEX_URL` |
+| `/pyspark_client-4.1.2-py3-none-any.whl` | Spark Connect client wheel | `PCW_PYSPARK_WHEEL_URL` |
+| `/pyspark_connect_web-0.1.0-py3-none-any.whl` | the pcw wheel (also on PyPI) | `PCW_WHEEL_URL` |
 
 `micropip` still fetches the small pure deps (`protobuf`,
-`googleapis-common-protos`, `py4j`) from PyPI at runtime. **Version constraint:**
+`googleapis-common-protos`, etc.) from PyPI at runtime. **Version constraint:**
 `pyspark>=4.0,<4.2` (enforced by `pcw.install()`).
 
-Source these from pyspark-connect-web's built site / release so versions match,
-and place them under `public/` (Vite copies `public/` into `dist/`). They are
-git-ignored (`public/pyodide/`, `public/*.whl`). To host them elsewhere
-(same-origin), override the globals above, e.g.:
+Run `npm run vendor:runtime` (see `scripts/vendor-runtime.mjs`) to fetch the
+release glue + the pcw wheel into `public/`; it prints the remaining steps for
+Pyodide and the `pyspark-client` wheel (version-matched to the release). Vite
+copies `public/` into `dist/`. These assets are git-ignored
+(`public/pyodide/`, `public/*.whl`). To host them elsewhere (same-origin),
+override the globals above, e.g.:
 
 ```ts
-await host.boot({ wheelUrl: "/cdn/pyspark_connect_web-0.1.5-py3-none-any.whl" });
+await host.boot({ wheelUrl: "/cdn/pyspark_connect_web-0.1.0-py3-none-any.whl" });
 ```
 
 ### 2. Browser JS glue files (copied into `public/vendor/`)
@@ -67,10 +71,11 @@ upstream provenance.
 The vendor files were copied from pyspark-connect-web at:
 
 > **Upstream repository:** https://github.com/HyukjinKwon/pyspark-client-wasm  
-> **Commit:** `c3fed03` (re-synced 2026-06-12)
+> **Release:** `v0.1.0` - glue + pcw wheel taken from the
+> `pyspark-connect-web-site-0.1.0.tgz` release asset (re-synced 2026-06-12).
 
-pyspark-client-wasm is actively developed; re-sync the vendor glue (and the
-same-origin asset versions) when it advances.
+Re-sync the vendor glue (and the same-origin asset versions) when a new release
+ships.
 
 ---
 

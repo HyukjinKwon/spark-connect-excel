@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 //
-// bridge.js - main-thread half of lane 3's blocking transport.
+// bridge.js - main-thread half of the blocking transport.
 //
 // The Web Worker (running Pyodide + PySpark) cannot do `fetch` against a
 // cross-origin gRPC-web endpoint and, more importantly, cannot block on an
@@ -11,7 +11,7 @@
 // control word and `Atomics.notify`-ing to wake the worker.
 //
 // The SAB layout + state machine is the authoritative contract; it is mirrored
-// in `sab_channel.py` and documented in team/findings-lane3-bridge.md. Keep the
+// in `sab_channel.py` and documented in the project notes. Keep the
 // three in sync by VALUE.
 //
 // Large results - bounded-window transfer
@@ -186,7 +186,6 @@ class Bridge {
     let timer = null;
     try {
       const { header, body } = this._readRequest();
-      console.log("[pcw bridge] rpc", header.kind, header.url, "body", body.length);
       const init = {
         method: "POST",
         headers: { ...header.headers },
@@ -226,9 +225,9 @@ class Bridge {
         }
       }
 
-      // Surface response headers so lane 1 can read grpc-status from HTTP
+      // Surface response headers so the can read grpc-status from HTTP
       // headers when a proxy puts it there (e.g. empty unary, or HTTP error
-      // with a grpc-status header). Cheap to collect; lane 1 ignores unknowns.
+      // with a grpc-status header). Cheap to collect; the ignores unknowns.
       const headers = {};
       try {
         resp.headers.forEach((v, k) => {
@@ -238,12 +237,11 @@ class Bridge {
         /* Headers not iterable in some shims; leave empty. */
       }
 
-      console.log("[pcw bridge] resp", resp.status, "kind", header.kind);
       if (header.kind === "unary") {
         const buf = new Uint8Array(await resp.arrayBuffer());
         // One logical message, windowed if larger than the payload region.
         // HTTP errors are NOT transport errors: pass the status + headers + any
-        // body through so lane 1 raises the right grpc exception.
+        // body through so the raises the right grpc exception.
         await this._emitMessage(resp.status, { ok: resp.ok, headers }, buf);
         // worker reads, sets S_IDLE; nothing more to do.
         return;
@@ -268,18 +266,15 @@ class Bridge {
         }
         if (done) break;
         if (!value || value.length === 0) continue;
-        console.log("[pcw bridge] stream chunk", value.length);
         const metaBase = first ? { ok: resp.ok, headers } : {};
         const cont = await this._emitMessage(resp.status, metaBase, value);
         first = false;
         if (!cont) return; // worker abandoned the stream (closed / errored)
         // Wait for the worker to consume this message and request the next.
         const ack = await this._awaitWorker(S_CHUNK_ACK);
-        console.log("[pcw bridge] stream ack", ack);
         if (ack === S_IDLE) return;
       }
       // End of stream.
-      console.log("[pcw bridge] stream end (RESP_END)");
       Atomics.store(this.ctrl, C_LENGTH, 0);
       Atomics.store(this.ctrl, C_STATE, S_RESP_END);
       Atomics.notify(this.ctrl, C_STATE);
