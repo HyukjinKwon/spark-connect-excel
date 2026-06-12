@@ -67,7 +67,9 @@ jobs:
           # pcw wheel (built from the same checkout -> version matches the glue)
           pip wheel /tmp/pcw --no-deps -w public/
           # whichever Spark client wheel the bootstrap asks for, at the exact name
-          want="$(grep -oE '/pyspark[A-Za-z0-9._-]*\.whl' "$boot" | head -1 | sed 's#^/##')"
+          # match the Spark client wheel (pyspark-<ver> or pyspark_client-<ver>),
+          # NOT pyspark_connect_web (which also starts with "pyspark").
+          want="$(grep -oE '/pyspark(_client)?-[0-9][A-Za-z0-9._-]*\.whl' "$boot" | head -1 | sed 's#^/##')"
           echo "bootstrap wants spark wheel: $want"
           if echo "$want" | grep -q '^pyspark_client-'; then
             sver="$(echo "$want" | sed -E 's/pyspark_client-([0-9.]+)-.*/\1/')"
