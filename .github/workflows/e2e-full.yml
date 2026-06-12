@@ -61,6 +61,10 @@ jobs:
           # pyspark-client is sdist-only on PyPI -> build the (pure) wheel.
           pip wheel "pyspark-client==${PYSPARK_CLIENT_VERSION}" --no-deps -w public/
           rm -f public/*.tar.gz
+          # pip builds it tagged py2.py3-none-any; the bootstrap requests
+          # pyspark_client-<ver>-py3-none-any.whl. Rename to the exact expected name.
+          built="$(ls public/pyspark_client-*.whl | head -1)"
+          mv "$built" "public/pyspark_client-${PYSPARK_CLIENT_VERSION}-py3-none-any.whl"
           ls public/pyspark_client-*.whl
 
       - name: Build dist (with vendored assets)
