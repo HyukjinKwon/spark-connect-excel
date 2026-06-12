@@ -49,6 +49,7 @@ services:
       - >-
         /opt/spark/sbin/start-connect-server.sh
         --packages org.apache.spark:spark-connect_2.13:4.0.0
+        --conf spark.jars.ivy=/tmp/.ivy2
         --conf spark.connect.grpc.binding.address=0.0.0.0
         --conf spark.connect.grpc.binding.port=15002
         && tail -f /opt/spark/logs/*.out

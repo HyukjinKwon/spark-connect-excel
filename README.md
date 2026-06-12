@@ -41,74 +41,57 @@ entirely in-browser via
 ### Prerequisites
 
 - Node 20.
-- Java 17 + Python 3.11 (to run a local Spark Connect server) - OR Docker (for the full Spark + Envoy stack).
 - A Chromium-based Excel host: Excel on Windows / Microsoft 365, or Excel on the web in Edge or Chrome.
+- A running Spark Connect server (see below).
 
-### Install and dev
+### Start a Spark Connect server
 
-```bash
-git clone https://github.com/HyukjinKwon/spark-connect-excel
-cd spark-connect-excel
-npm install
-npx office-addin-dev-certs install     # once - OS-trusted local HTTPS cert
-npm run dev:https                      # serves https://localhost:3000 (COI headers)
-```
-
-### Bring up the Spark Connect stack
+The demo and the add-in both talk to a Spark Connect server through an Envoy
+grpc-web proxy. Start one first, either way:
 
 ```bash
+# Docker - full stack (Spark Connect + Envoy + a static host) in one command:
 docker compose -f deploy/compose.yaml up
-# Wait ~60s for Spark Connect to become healthy
 ```
+
+No Docker? Run a server locally with PySpark (Java 17) and put Envoy in front of
+it - see the
+[installation guide](https://hyukjinkwon.github.io/spark-connect-excel/installation/).
 
 ### Try it without Excel - the web demo
 
-The lowest-friction way to try Spark-in-the-browser: open
-`https://localhost:3000/demo/demo.html` (with `npm run dev:https` running). It's
-a standalone page - **no Excel, no sideload** - with a connection form and a
-**SQL / Python** toggle:
-
-- **SQL mode** -> results render as a typed table.
-- **Python mode** -> run real PySpark (`spark.range(10).filter("id % 2 = 0").toPandas()`);
-  `spark` is the connected session.
-
-To host it for others, build (`npm run build`) and deploy `dist/` to a static host
-that sets COI headers. `dist/_headers` (Netlify / Cloudflare Pages) and
-`dist/staticwebapp.config.json` (Azure Static Web Apps) are included and set them
-for you.
-
-### Install into Excel (sideload)
-
-**One command** - clones, installs, sets up the local HTTPS cert, and serves the
-add-in:
+A standalone page, no Excel and no sideload. One command clones, installs, and
+serves the add-in:
 
 ```bash
-# Excel on the web (default):
 curl -fsSL https://raw.githubusercontent.com/HyukjinKwon/spark-connect-excel/main/scripts/quickstart.sh | bash
 ```
 
-Then in **Excel on the web** (Edge/Chrome): **Insert -> Add-ins -> Upload My
-Add-in -> choose `manifest.xml`**. The **Spark SQL** button appears on the Home
-ribbon.
+Open `https://localhost:3000/demo/demo.html`, point it at your Spark Connect
+server, and run a query. See the
+[usage guide](https://hyukjinkwon.github.io/spark-connect-excel/usage/).
 
-For **Windows / Mac desktop** (also sideloads and opens Excel):
+### Try with Excel on the web (sideload)
+
+With a Spark Connect server running, start the add-in:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/HyukjinKwon/spark-connect-excel/main/scripts/quickstart.sh | bash
+```
+
+Then in Excel on the web (Edge/Chrome): **Insert -> Add-ins -> Upload My Add-in
+-> choose `manifest.xml`**. The **Spark SQL** button appears on the Home ribbon.
+
+### Try with Excel on Windows / Mac desktop (sideloads)
+
+With a Spark Connect server running:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/HyukjinKwon/spark-connect-excel/main/scripts/quickstart.sh | bash -s -- desktop
 ```
 
-Prefer to run each step yourself? See [docs/installation.md](docs/installation.md).
-
-> Requires a Chromium-based Excel host (Excel on Windows / Microsoft 365, or
-> Excel on the web in Edge or Chrome). The add-in shows a clear message on
-> unsupported hosts.
-
-To let *other people* install it without cloning, host the built bundle
-(`npm run build` -> `dist/`) on an HTTPS origin with COI headers, regenerate the
-manifest (`npm run build:manifest -- --origin https://your-host`), and share that
-`manifest.xml`. See [docs/distribution.md](docs/distribution.md).
-
-Full installation guide: [docs/installation.md](docs/installation.md)
+This serves the add-in and opens Excel with it sideloaded. Full guides are on the
+[documentation site](https://hyukjinkwon.github.io/spark-connect-excel/).
 
 ## Compatibility
 
