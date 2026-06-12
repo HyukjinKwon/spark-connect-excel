@@ -92,7 +92,8 @@ static_resources:
                         allow_methods: "POST, OPTIONS"
                         allow_headers: >-
                           keep-alive,user-agent,cache-control,content-type,content-transfer-encoding,
-                          x-grpc-web,x-user-agent,grpc-timeout,authorization,x-spark-connect-session-id
+                          x-grpc-web,x-user-agent,grpc-timeout,grpc-accept-encoding,grpc-encoding,
+                          authorization,x-spark-connect-session-id
                         expose_headers: "grpc-status,grpc-message,x-spark-connect-session-id"
                         allow_credentials: true
                         max_age: "86400"
