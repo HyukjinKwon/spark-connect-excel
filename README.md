@@ -22,8 +22,6 @@ entirely in-browser via
 [pyspark-connect-web](https://github.com/HyukjinKwon/pyspark-client-wasm)
 (real PySpark, in Pyodide).
 
----
-
 ## Features
 
 - **SQL in Excel** - write Spark SQL in the task pane; results land as typed cells.
@@ -35,8 +33,6 @@ entirely in-browser via
 - **Secure token handling** - bearer tokens never touch a cell or the workbook file.
 - **Zero-install web demo** - a standalone page (`/demo`) that runs **SQL _or_ PySpark**
   in the browser, no Excel required - the easiest way to try it.
-
----
 
 ## Architecture
 
@@ -61,8 +57,6 @@ The critical design choice: Pyodide and pyspark-connect-web run in an
 us `crossOriginIsolated === true` and `SharedArrayBuffer` without depending on
 Excel's embedding context. The task pane is pure Office.js UI; the dialog hosts
 all the Spark machinery.
-
----
 
 ## Quickstart
 
@@ -135,8 +129,6 @@ to `~/Library/Containers/com.microsoft.Excel/Data/Documents/wef/`. See
 
 Full installation guide: [docs/installation.md](docs/installation.md)
 
----
-
 ## Powered by pyspark-connect-web
 
 The Spark plumbing is provided by
@@ -150,8 +142,6 @@ We reuse it without forking:
   `coi-serviceworker.js`) are copied verbatim into `public/vendor/`.
 
 See [docs/reuse.md](docs/reuse.md) for provenance and re-sync instructions.
-
----
 
 ## Documentation
 
@@ -168,8 +158,6 @@ See [docs/reuse.md](docs/reuse.md) for provenance and re-sync instructions.
 | [DECISIONS.md](DECISIONS.md) | Architectural invariants |
 | [API_CONTRACT.md](API_CONTRACT.md) | SparkBridge seam |
 
----
-
 ## Compatibility
 
 | Component | Supported |
@@ -181,17 +169,3 @@ See [docs/reuse.md](docs/reuse.md) for provenance and re-sync instructions.
 | Browser engine | Chromium-based (WebView2, Edge, Chrome) - `COEP: credentialless` is Chromium-only |
 | Node | 20 LTS |
 | Python | 3.11+ (for local dev/tests; Pyodide 0.28+ in the browser) |
-
----
-
-## License and trademarks
-
-Apache License 2.0 - see [LICENSE](LICENSE).
-
-Independent project; not an Apache Software Foundation project. "Apache Spark",
-"Spark", and "PySpark" are trademarks of the Apache Software Foundation, used
-here only to describe interoperability with the Spark Connect protocol. This
-project is not endorsed by or affiliated with the Apache Software Foundation.
-
-"Microsoft" and "Excel" are trademarks of Microsoft Corporation. This project
-is an independent add-in and is not endorsed by or affiliated with Microsoft.
