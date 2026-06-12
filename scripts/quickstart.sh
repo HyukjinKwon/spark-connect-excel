@@ -44,6 +44,17 @@ fi
 say "installing dependencies (npm install)"
 npm install
 
+# 2b. Vendor the same-origin runtime assets (Pyodide + the wheels + glue) the
+#     engine needs to boot. Idempotent: skipped if already present. This is the
+#     exact set the end-to-end CI gate vendors. Needs python3 + pip + curl + tar.
+if [ -f public/pyodide/pyodide.mjs ] && ls public/pyspark_client-*.whl >/dev/null 2>&1; then
+  say "runtime assets already vendored (public/pyodide + wheels) - skipping"
+else
+  command -v python3 >/dev/null 2>&1 || die "python3 is required to vendor the runtime (pip builds the wheels)"
+  say "vendoring runtime assets (Pyodide + wheels) - first run only, downloads ~30 MB"
+  npm run vendor:runtime
+fi
+
 # 3. Trusted local HTTPS cert (idempotent; may prompt for keychain/sudo once).
 say "installing the local HTTPS dev cert (one time)"
 npx --yes office-addin-dev-certs install || say "cert step skipped/failed - rerun 'npx office-addin-dev-certs install' if Excel rejects the cert"

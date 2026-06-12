@@ -40,7 +40,8 @@ entirely in-browser via
 
 ### Prerequisites
 
-- Node 20.
+- Node 20, plus `python3` + `pip`, `git`, `curl`, `tar` (the quickstart vendors
+  Pyodide + the wheels the in-browser engine needs - it does this for you).
 - A Chromium-based Excel host: Excel on Windows / Microsoft 365, or Excel on the web in Edge or Chrome.
 - A running Spark Connect server (see below).
 
@@ -50,13 +51,18 @@ The demo and the add-in both talk to a Spark Connect server through an Envoy
 grpc-web proxy. Start one first, either way:
 
 ```bash
-# Docker - full stack (Spark Connect + Envoy + a static host) in one command:
+# Docker - Spark Connect + Envoy (grpc-web at :8081) in one command:
 docker compose -f deploy/compose.yaml up
 ```
 
 No Docker? Run a server locally with PySpark (Java 17) and put Envoy in front of
 it - see the
 [installation guide](https://hyukjinkwon.github.io/spark-connect-excel/installation/).
+
+> The quickstart below vendors the engine assets (Pyodide + wheels) and serves
+> the add-in over HTTPS. This exact stack - Pyodide + grpc-web + Spark Connect -
+> is exercised end to end by the `e2e-full` CI gate on every push, which runs a
+> live Spark SQL query and renders the chart shown above.
 
 ### Try it without Excel - the web demo
 
