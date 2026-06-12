@@ -52,20 +52,34 @@ jobs:
       - name: Install Node dependencies
         run: npm ci
 
-      - name: Vendor same-origin runtime wheels (match pcw main + Spark 4.0.0)
+      - name: Vendor pcw glue + wheels from ONE pcw checkout (self-consistent)
         run: |
           set -euxo pipefail
-          # The committed glue (public/vendor/, from pcw main) requests these at
-          # the site root: /pyspark-4.0.0-py2.py3-none-any.whl (matches the
-          # apache/spark:4.0.0 server) and /pyspark_connect_web-0.0.1.dev0-...whl.
-          # Build both as wheels (PyPI has only sdists), normalize the filenames.
-          pip wheel "pyspark==4.0.0" --no-deps -w public/
-          pip wheel "git+https://github.com/HyukjinKwon/pyspark-client-wasm@main" --no-deps -w public/
+          # pcw moves fast (release vs main diverge on version + Spark target), so
+          # take the glue AND the pcw wheel from the SAME checkout - their versions
+          # then match by construction. Build whichever spark/pyspark-client wheel
+          # that checkout's bootstrap requests (parsed from worker_bootstrap.js).
+          git clone --depth 1 https://github.com/HyukjinKwon/pyspark-client-wasm /tmp/pcw
+          cp /tmp/pcw/pyspark_connect_web/worker/worker_bootstrap.js \
+             /tmp/pcw/pyspark_connect_web/worker/bridge.js \
+             /tmp/pcw/pyspark_connect_web/jupyterlite/coi-serviceworker.js public/vendor/
+          boot=public/vendor/worker_bootstrap.js
+          # pcw wheel (built from the same checkout -> version matches the glue)
+          pip wheel /tmp/pcw --no-deps -w public/
+          # whichever Spark client wheel the bootstrap asks for, at the exact name
+          want="$(grep -oE '/pyspark[A-Za-z0-9._-]*\.whl' "$boot" | head -1 | sed 's#^/##')"
+          echo "bootstrap wants spark wheel: $want"
+          if echo "$want" | grep -q '^pyspark_client-'; then
+            sver="$(echo "$want" | sed -E 's/pyspark_client-([0-9.]+)-.*/\1/')"
+            pip wheel "pyspark-client==${sver}" --no-deps -w public/
+            got="$(ls public/pyspark_client-*.whl | head -1)"
+          else
+            sver="$(echo "$want" | sed -E 's/pyspark-([0-9.]+)-.*/\1/')"
+            pip wheel "pyspark==${sver}" --no-deps -w public/
+            got="$(ls public/pyspark-*.whl | head -1)"
+          fi
+          [ "$got" = "public/${want}" ] || mv "$got" "public/${want}"
           rm -f public/*.tar.gz
-          ps="$(ls public/pyspark-4.0.0-*.whl | head -1)"
-          mv "$ps" public/pyspark-4.0.0-py2.py3-none-any.whl
-          pcw="$(ls public/pyspark_connect_web-*.whl | head -1)"
-          mv "$pcw" public/pyspark_connect_web-0.0.1.dev0-py3-none-any.whl
           ls public/*.whl
 
       - name: Vendor Pyodide (same-origin)
