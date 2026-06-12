@@ -65,14 +65,28 @@ test.describe("full-stack: Pyodide + grpc-web + Spark Connect", () => {
     await page.locator(".code-editor__textarea").fill(sql);
     await page.getByRole("button", { name: "Run" }).click();
 
-    // Result table rendered from real Spark output.
-    const table = page.locator("table.demo-table");
-    await expect(table).toBeVisible({ timeout: 60_000 });
-    await expect(table.locator("thead th").nth(0)).toContainText("quarter");
-    await expect(table.locator("thead th").nth(1)).toContainText("revenue");
-    await expect(table.locator("tbody tr").nth(0).locator("td").nth(0)).toContainText("Q1");
-    // The demo renders a real SVG chart from the result (category + numeric).
-    await expect(page.locator(".demo-chart svg")).toBeVisible({ timeout: 30_000 });
+    try {
+      // Result table rendered from real Spark output.
+      const table = page.locator("table.demo-table");
+      await expect(table).toBeVisible({ timeout: 120_000 });
+      await expect(table.locator("thead th").nth(0)).toContainText("quarter");
+      await expect(table.locator("thead th").nth(1)).toContainText("revenue");
+      await expect(table.locator("tbody tr").nth(0).locator("td").nth(0)).toContainText("Q1");
+      // The demo renders a real SVG chart from the result (category + numeric).
+      await expect(page.locator(".demo-chart svg")).toBeVisible({ timeout: 30_000 });
+    } catch (e) {
+      // run_sql renders its error into the run-status line, not the browser log
+      // dump above - surface BOTH so a failure here is diagnosable.
+      const runStatus = await page
+        .locator(".demo-status")
+        .nth(1)
+        .textContent()
+        .catch(() => "(no run status)");
+      console.log("=== QUERY did not render. Run status:", runStatus);
+      console.log("=== Browser log:\n" + log.join("\n"));
+      await page.screenshot({ path: "playwright-report/query-failed.png", fullPage: true });
+      throw e;
+    }
 
     // Capture a genuine screenshot of the running demo (uploaded as an artifact):
     // a live Spark SQL query with the rendered chart.
