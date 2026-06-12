@@ -86,6 +86,22 @@ npm run build       # tsc --noEmit + vite build
 
 Sideloading installs the add-in directly, without an add-in store.
 
+### One command (quickstart)
+
+The fastest path - clones, installs, sets up the local HTTPS cert, and serves
+the add-in (then upload the manifest as below):
+
+```bash
+# Excel on the web (default):
+curl -fsSL https://raw.githubusercontent.com/HyukjinKwon/spark-connect-excel/main/scripts/quickstart.sh | bash
+
+# Windows / Mac desktop (also sideloads + opens Excel):
+curl -fsSL https://raw.githubusercontent.com/HyukjinKwon/spark-connect-excel/main/scripts/quickstart.sh | bash -s -- desktop
+```
+
+The script is `scripts/quickstart.sh`. Prefer to run the steps yourself? Follow
+the manual instructions below.
+
 ### Excel on the web - recommended (fewest steps, no admin)
 
 This is the lowest-friction path. **Same machine (dev):**

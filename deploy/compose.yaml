@@ -54,6 +54,10 @@ services:
         && tail -f /opt/spark/logs/*.out
     environment:
       SPARK_NO_DAEMONIZE: "false"
+      # The apache/spark image runs with HOME=/nonexistent, so Ivy (used by
+      # --packages to resolve spark-connect) can't write its cache and the
+      # server crashes. Point HOME at a writable dir.
+      HOME: /tmp
     expose:
       - "15002"
     # Expose the raw gRPC port to the host so e2e reference scripts

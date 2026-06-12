@@ -79,45 +79,25 @@ for you.
 
 ### Install into Excel (sideload)
 
-First get the project and start the local add-in server (one time):
+**One command** - clones, installs, sets up the local HTTPS cert, and serves the
+add-in:
 
 ```bash
-git clone https://github.com/HyukjinKwon/spark-connect-excel
-cd spark-connect-excel
-npm install
-npx office-addin-dev-certs install   # trusted local HTTPS cert (once)
+# Excel on the web (default):
+curl -fsSL https://raw.githubusercontent.com/HyukjinKwon/spark-connect-excel/main/scripts/quickstart.sh | bash
 ```
 
-**Excel on the web - recommended (no admin, fewest clicks):**
+Then in **Excel on the web** (Edge/Chrome): **Insert -> Add-ins -> Upload My
+Add-in -> choose `manifest.xml`**. The **Spark SQL** button appears on the Home
+ribbon.
+
+For **Windows / Mac desktop** (also sideloads and opens Excel):
 
 ```bash
-npm run dev:https                    # serve the add-in at https://localhost:3000
+curl -fsSL https://raw.githubusercontent.com/HyukjinKwon/spark-connect-excel/main/scripts/quickstart.sh | bash -s -- desktop
 ```
 
-Then, in **Excel on the web** (Edge or Chrome): **Insert -> Add-ins ->
-Upload My Add-in -> choose `manifest.xml`**. The **Spark SQL** button appears on
-the Home ribbon.
-
-> Terminal-only web sideload: a CLI path exists
-> (`npx office-addin-debugging start manifest.xml web --document <workbook-url>`)
-> but it needs a workbook URL on OneDrive/SharePoint and an M365 sign-in, so it
-> is not actually simpler than the upload above. For local dev, the manual
-> upload is the fastest.
-
-**Windows / Mac desktop (one command):**
-
-```bash
-git clone https://github.com/HyukjinKwon/spark-connect-excel
-cd spark-connect-excel
-npm install
-npx office-addin-dev-certs install                       # trusted cert (once)
-npm run dev:https &                                       # serve the add-in
-npx office-addin-debugging start manifest.xml desktop --app excel   # sideload + open Excel
-```
-
-`office-addin-debugging start` copies the manifest to the right place and opens
-Excel with the add-in loaded; `office-addin-debugging stop manifest.xml` removes
-it. (Manual paths are in [scripts/sideload.md](scripts/sideload.md).)
+Prefer to run each step yourself? See [docs/installation.md](docs/installation.md).
 
 > Requires a Chromium-based Excel host (Excel on Windows / Microsoft 365, or
 > Excel on the web in Edge or Chrome). The add-in shows a clear message on
