@@ -148,17 +148,23 @@ export class PyodideHost implements RuntimeHost {
     const pyodideIndexUrl = merged.pyodideIndexUrl; // undefined -> worker default (/pyodide/)
 
     try {
-      // ---- 1. Build the Blob shim and create a classic Worker ---------------
+      // ---- 1. Create the Pyodide module worker -----------------------------
+      // Recent Pyodide (v314+) refuses classic workers, so this is a MODULE
+      // worker. By default (no URL overrides) we point it DIRECTLY at the
+      // same-origin worker_bootstrap.js - exactly like pyspark-connect-web's
+      // own harness - which avoids blob-worker base-URL pitfalls. Only when the
+      // caller overrides an asset URL do we fall back to a Blob shim that
+      // injects the PCW_* globals before importing the bootstrap.
       onProgress?.("Booting Pyodide worker…");
-      const shimSrc = buildBootstrapBlob(pyodideIndexUrl, wheelUrl);
-      const blob = new Blob([shimSrc], { type: "application/javascript" });
-      this._blobUrl = URL.createObjectURL(blob);
-
-      // Module worker: recent Pyodide (v314+) refuses classic workers, and the
-      // bootstrap loads pyodide.mjs via dynamic import. Messages posted before
-      // the module finishes evaluating are queued and delivered once its
-      // addEventListener("message") handler is registered.
-      const worker = new Worker(this._blobUrl, { type: "module" });
+      let workerUrl: string;
+      if (pyodideIndexUrl === undefined && wheelUrl === undefined) {
+        workerUrl = new URL("/vendor/worker_bootstrap.js", self.location.origin).href;
+      } else {
+        const shimSrc = buildBootstrapBlob(pyodideIndexUrl, wheelUrl);
+        this._blobUrl = URL.createObjectURL(new Blob([shimSrc], { type: "text/javascript" }));
+        workerUrl = this._blobUrl;
+      }
+      const worker = new Worker(workerUrl, { type: "module" });
       this._worker = worker;
 
       // ---- 2. Wire bridge.js on the main thread ----------------------------

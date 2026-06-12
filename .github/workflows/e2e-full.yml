@@ -52,8 +52,21 @@ jobs:
       - name: Install Node dependencies
         run: npm ci
 
-      - name: Vendor pcw glue + wheel (same-origin)
-        run: npm run vendor:runtime
+      - name: Vendor same-origin runtime wheels (match pcw main + Spark 4.0.0)
+        run: |
+          set -euxo pipefail
+          # The committed glue (public/vendor/, from pcw main) requests these at
+          # the site root: /pyspark-4.0.0-py2.py3-none-any.whl (matches the
+          # apache/spark:4.0.0 server) and /pyspark_connect_web-0.0.1.dev0-...whl.
+          # Build both as wheels (PyPI has only sdists), normalize the filenames.
+          pip wheel "pyspark==4.0.0" --no-deps -w public/
+          pip wheel "git+https://github.com/HyukjinKwon/pyspark-client-wasm@main" --no-deps -w public/
+          rm -f public/*.tar.gz
+          ps="$(ls public/pyspark-4.0.0-*.whl | head -1)"
+          mv "$ps" public/pyspark-4.0.0-py2.py3-none-any.whl
+          pcw="$(ls public/pyspark_connect_web-*.whl | head -1)"
+          mv "$pcw" public/pyspark_connect_web-0.0.1.dev0-py3-none-any.whl
+          ls public/*.whl
 
       - name: Vendor Pyodide (same-origin)
         run: |
@@ -63,18 +76,6 @@ jobs:
           tar xjf /tmp/pyodide.tar.bz2 -C /tmp
           cp -r /tmp/pyodide/* public/pyodide/
           test -f public/pyodide/pyodide.mjs
-
-      - name: Vendor pyspark-client wheel (same-origin)
-        run: |
-          set -euxo pipefail
-          # pyspark-client is sdist-only on PyPI -> build the (pure) wheel.
-          pip wheel "pyspark-client==${PYSPARK_CLIENT_VERSION}" --no-deps -w public/
-          rm -f public/*.tar.gz
-          # pip builds it tagged py2.py3-none-any; the bootstrap requests
-          # pyspark_client-<ver>-py3-none-any.whl. Rename to the exact expected name.
-          built="$(ls public/pyspark_client-*.whl | head -1)"
-          mv "$built" "public/pyspark_client-${PYSPARK_CLIENT_VERSION}-py3-none-any.whl"
-          ls public/pyspark_client-*.whl
 
       - name: Build dist (with vendored assets)
         run: npm run build
