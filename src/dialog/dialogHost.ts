@@ -86,7 +86,17 @@ async function main(): Promise<void> {
 
     setStatus(msg, /* isError */ true);
 
-    // Inform the parent so it can surface a meaningful error to the user.
+    // User-facing reason (the task pane renders this as a guidance panel).
+    const reason =
+      "This Excel host can't run the Spark engine. It needs a Chromium-based " +
+      "Excel — Excel on Windows (Microsoft 365), or Excel on the web in " +
+      "Microsoft Edge or Google Chrome. Safari, Firefox, and older Excel " +
+      "builds aren't supported because the engine relies on SharedArrayBuffer " +
+      "(cross-origin isolation).";
+
+    // Tell the parent to show the blocking unsupported panel…
+    pushEvent({ kind: "evt", event: "unsupported", payload: { reason, diagnostics: diag } });
+    // …and keep the technical detail in the log channel for debugging.
     pushEvent({
       kind: "evt",
       event: "log",

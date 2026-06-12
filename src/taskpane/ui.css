@@ -568,6 +568,41 @@ body {
   color: #444;
 }
 
+/* ── Unsupported host panel ───────────────────────────────────────────────── */
+
+.sc-unsupported {
+  margin: 16px 12px;
+  padding: 16px;
+  border: 1px solid #f0c36d;
+  border-left: 4px solid #e25a1c;
+  border-radius: 6px;
+  background: #fffaf3;
+}
+
+.sc-unsupported__title {
+  margin: 0 0 8px;
+  font-size: 15px;
+  color: #b04610;
+}
+
+.sc-unsupported__detail {
+  margin: 0 0 8px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: #444;
+}
+
+.sc-unsupported__list {
+  margin: 4px 0 0;
+  padding-left: 18px;
+  font-size: 12.5px;
+  color: #444;
+}
+
+.sc-unsupported__list li {
+  margin: 2px 0;
+}
+
 /* ── Utility ──────────────────────────────────────────────────────────────── */
 
 .sc-hidden {

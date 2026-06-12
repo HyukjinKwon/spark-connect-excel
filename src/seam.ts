@@ -112,7 +112,12 @@ export interface BridgeResponse {
 /** Unsolicited dialog -> parent pushes (boot progress, status changes, logs). */
 export interface BridgeEvent {
   kind: "evt";
-  event: "ready" | "status" | "progress" | "log";
+  /**
+   * `unsupported` signals the host can't run the engine (no cross-origin
+   * isolation / SharedArrayBuffer) — the task pane shows a blocking guidance
+   * panel instead of a generic error. payload: `{ reason: string }`.
+   */
+  event: "ready" | "status" | "progress" | "log" | "unsupported";
   payload?: unknown;
 }
 

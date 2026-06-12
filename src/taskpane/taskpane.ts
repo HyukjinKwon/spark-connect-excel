@@ -44,6 +44,16 @@ async function boot(): Promise<void> {
       width: 60,
       height: 60,
       onEvent: (evt: BridgeEvent) => {
+        // Unsupported host (no cross-origin isolation / SharedArrayBuffer):
+        // replace the UI with a blocking guidance panel.
+        if (evt.event === "unsupported") {
+          removeBanner(engineBanner);
+          const reason =
+            (evt.payload as { reason?: string } | undefined)?.reason ??
+            "This Excel host can't run the Spark engine.";
+          renderUnsupportedInBody(pane.body, reason);
+          return;
+        }
         // Forward progress events to the banner; forward status events to the
         // query panel's refreshStatus hook (set after renderQueryPanel runs).
         if (evt.event === "progress" && typeof evt.payload === "string") {
@@ -200,6 +210,42 @@ function renderErrorInBody(body: HTMLElement, msg: string): void {
   errEl.className = "sc-error";
   errEl.textContent = msg;
   body.appendChild(errEl);
+}
+
+/** Replace the body with a clear, blocking "unsupported host" guidance panel. */
+function renderUnsupportedInBody(body: HTMLElement, reason: string): void {
+  while (body.firstChild) body.removeChild(body.firstChild);
+
+  const panel = document.createElement("div");
+  panel.className = "sc-unsupported";
+
+  const heading = document.createElement("h2");
+  heading.className = "sc-unsupported__title";
+  heading.textContent = "Unsupported Excel host";
+
+  const detail = document.createElement("p");
+  detail.className = "sc-unsupported__detail";
+  detail.textContent = reason;
+
+  const list = document.createElement("ul");
+  list.className = "sc-unsupported__list";
+  for (const item of [
+    "Excel on Windows (Microsoft 365)",
+    "Excel on the web in Microsoft Edge or Google Chrome",
+  ]) {
+    const li = document.createElement("li");
+    li.textContent = item;
+    list.appendChild(li);
+  }
+
+  panel.appendChild(heading);
+  panel.appendChild(detail);
+  const supported = document.createElement("p");
+  supported.className = "sc-unsupported__detail";
+  supported.textContent = "Supported hosts:";
+  panel.appendChild(supported);
+  panel.appendChild(list);
+  body.appendChild(panel);
 }
 
 function errMsg(err: unknown): string {
