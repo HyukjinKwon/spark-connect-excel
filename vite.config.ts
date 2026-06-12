@@ -6,13 +6,49 @@ import { resolve } from "node:path";
 //   - taskpane.html : the Excel task pane (UI surface, NOT cross-origin isolated)
 //   - dialog.html   : the COI host window (Pyodide + pcw live here; see DECISIONS #1/#2)
 //
-// Dev server sets cross-origin-isolation headers so the dialog page (served from
-// the same dev origin) gets `crossOriginIsolated === true` for SharedArrayBuffer.
-// We use COEP `credentialless` so cross-origin Pyodide/PyPI loads don't need CORP.
+// Cross-origin-isolation headers so the dialog page gets
+// `crossOriginIsolated === true` for SharedArrayBuffer. COEP `credentialless`
+// so cross-origin Pyodide/PyPI loads don't need CORP.
+//
+// CRITICAL: these go on the dialog (and its resources + the demo) but NOT on the
+// task pane. The task pane is framed by the Office host; if it is served with
+// `COOP: same-origin` it lands in its own browsing-context group, and then the
+// Office Dialog API on Excel on the web refuses to open the (also isolated)
+// dialog with "the dialog's domain and the add-in host's domain are not in the
+// same security zone". Keeping the task pane non-isolated avoids that, while the
+// dialog window it opens is still isolated and gets SharedArrayBuffer.
 const coiHeaders = {
   "Cross-Origin-Opener-Policy": "same-origin",
   "Cross-Origin-Embedder-Policy": "credentialless",
 };
+
+// The task pane must NOT be cross-origin isolated; everything else (dialog,
+// demo, and the same-origin assets they load) should be.
+const needsCoi = (url: string | undefined): boolean =>
+  !!url && !url.startsWith("/taskpane");
+
+function coiExceptTaskpane() {
+  const mw = (
+    req: { url?: string },
+    res: { setHeader(k: string, v: string): void },
+    next: () => void,
+  ) => {
+    if (needsCoi(req.url)) {
+      res.setHeader("Cross-Origin-Opener-Policy", coiHeaders["Cross-Origin-Opener-Policy"]);
+      res.setHeader("Cross-Origin-Embedder-Policy", coiHeaders["Cross-Origin-Embedder-Policy"]);
+    }
+    next();
+  };
+  return {
+    name: "coi-except-taskpane",
+    configureServer(server: { middlewares: { use(fn: typeof mw): void } }) {
+      server.middlewares.use(mw);
+    },
+    configurePreviewServer(server: { middlewares: { use(fn: typeof mw): void } }) {
+      server.middlewares.use(mw);
+    },
+  };
+}
 
 // Office add-ins require HTTPS to load the task pane on Windows (WebView2) and
 // Mac (WKWebView). `npm run dev:https` sets HTTPS=true; we then serve with the
@@ -32,10 +68,10 @@ export default defineConfig(async () => {
   return {
     root: "src",
     publicDir: resolve(__dirname, "public"),
+    plugins: [coiExceptTaskpane()],
     server: {
       port: 3000,
       https,
-      headers: coiHeaders,
       fs: {
         // Allow importing the canonical Python runtime (python/*.py) as ?raw from src/.
         allow: [resolve(__dirname)],
@@ -44,7 +80,6 @@ export default defineConfig(async () => {
     preview: {
       port: 3000,
       https,
-      headers: coiHeaders,
     },
     build: {
       outDir: resolve(__dirname, "dist"),

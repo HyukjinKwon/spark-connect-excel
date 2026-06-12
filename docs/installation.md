@@ -107,24 +107,12 @@ the manual instructions below.
 This is the lowest-friction path. **Same machine (dev):**
 
 1. Run `npm run dev:https` (and `npx office-addin-dev-certs install` once).
-2. Open **Excel on the web** in Microsoft Edge or Google Chrome, signed in with a
-   **work/school Microsoft 365 account** (see the note below).
+2. Open **Excel on the web** in Microsoft Edge or Google Chrome.
 3. **Home -> Add-ins** (the Add-ins button is on the **Home** tab in current
    Excel on the web; older builds put it under **Insert**). In the Office Add-ins
    dialog, open the **MY ADD-INS** tab and click **"Choose your add-in
    manifest"** (a.k.a. "Upload My Add-in"), then pick `manifest.xml`.
 4. The **Spark SQL** button appears on the Home ribbon.
-
-!!! warning "Work/school account required for web sideloading"
-    "Upload My Add-in" is only available on **Microsoft 365 work/school**
-    accounts, and the workbook must be saved in OneDrive for Business or
-    SharePoint. **Personal Microsoft accounts** (the title bar shows "Buy
-    Microsoft 365") have no Add-ins button and no "Upload My Add-in" - Microsoft
-    disables add-in sideloading for consumer accounts, and there is no setting to
-    enable it. Use a work/school account, or use Excel desktop (below), which
-    sideloads regardless of account type. If even your work tenant hides it, an
-    admin has blocked add-ins; ask IT to allow user add-ins or to deploy it via
-    **Integrated apps** (Centralized Deployment) in the M365 admin center.
 
 **To let other people install it**, the add-in must be hosted where they can
 reach it - host the built bundle (`npm run build` -> `dist/`) on an HTTPS origin

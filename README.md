@@ -90,12 +90,6 @@ Then in Excel on the web (Edge/Chrome): **Home -> Add-ins -> MY ADD-INS ->
 the **Home** tab in current Excel on the web; older builds put it under
 **Insert**.) The **Spark SQL** button then appears on the Home ribbon.
 
-> **Requires a work/school Microsoft 365 account.** Personal Microsoft accounts
-> ("Buy Microsoft 365" in the title bar) do not show the Add-ins button or
-> "Upload My Add-in" at all - Microsoft disables add-in sideloading for consumer
-> accounts. Sign in with a work/school account and save the workbook to its
-> OneDrive/SharePoint. (Excel desktop sideloads regardless - see below.)
-
 ### Try with Excel on Windows / Mac desktop (sideloads)
 
 With a Spark Connect server running:
