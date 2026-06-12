@@ -62,10 +62,14 @@ static_resources:
                           - safe_regex:
                               regex: "^https?://localhost:(3000|8000)$"
                         allow_methods: "GET, POST, OPTIONS"
-                        allow_headers: >-
-                          keep-alive,user-agent,cache-control,content-type,content-transfer-encoding,
-                          x-grpc-web,x-user-agent,grpc-timeout,grpc-accept-encoding,grpc-encoding,
-                          authorization,x-spark-connect-session-id
+                        # Reflect ALL requested headers. The grpc-web client adds
+                        # several headers (grpc-accept-encoding, transport, ...);
+                        # enumerating them is brittle. "*" is safe here because
+                        # this dev stack is localhost-only and the grpc-web fetch
+                        # is cross-origin and NON-credentialed (no cookies), for
+                        # which browsers accept a wildcard allow-headers. The prod
+                        # config keeps an explicit allowlist (it uses credentials).
+                        allow_headers: "*"
                         expose_headers: "grpc-status,grpc-message,x-spark-connect-session-id"
                         max_age: "1728000"
                       routes:

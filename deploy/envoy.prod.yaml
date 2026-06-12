@@ -90,10 +90,13 @@ static_resources:
                         allow_origin_string_match:
                           - exact: "https://YOUR-ADDIN-ORIGIN.example.com"
                         allow_methods: "POST, OPTIONS"
+                        # Explicit allowlist (prod uses credentials, so "*" is
+                        # not permitted by browsers). Must cover every header the
+                        # grpc-web client sends, including its custom "transport".
                         allow_headers: >-
                           keep-alive,user-agent,cache-control,content-type,content-transfer-encoding,
                           x-grpc-web,x-user-agent,grpc-timeout,grpc-accept-encoding,grpc-encoding,
-                          authorization,x-spark-connect-session-id
+                          transport,authorization,x-spark-connect-session-id
                         expose_headers: "grpc-status,grpc-message,x-spark-connect-session-id"
                         allow_credentials: true
                         max_age: "86400"
