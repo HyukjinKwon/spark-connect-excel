@@ -146,6 +146,18 @@ class TestNormalizeValue:
     def test_string_passthrough(self) -> None:
         assert _srt._normalize_value("hello") == "hello"
 
+    def test_decimal_becomes_float(self) -> None:
+        import decimal
+
+        result = _srt._normalize_value(decimal.Decimal("1.5"))
+        assert isinstance(result, float)
+        assert result == 1.5
+
+    def test_decimal_nan_becomes_none(self) -> None:
+        import decimal
+
+        assert _srt._normalize_value(decimal.Decimal("NaN")) is None
+
     def test_datetime_to_iso(self) -> None:
         dt = datetime.datetime(2024, 3, 15, 12, 0, 0)
         assert _srt._normalize_value(dt) == "2024-03-15T12:00:00"

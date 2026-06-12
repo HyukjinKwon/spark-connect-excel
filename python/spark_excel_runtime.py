@@ -57,6 +57,7 @@ def _normalize_value(v: Any) -> Any:
     # Guard: import pandas lazily so the module can be imported in environments
     # that have pyspark stubs but no pandas (tests override toPandas anyway).
     import datetime
+    import decimal
 
     try:
         import pandas as pd
@@ -105,6 +106,14 @@ def _normalize_value(v: Any) -> Any:
     # Python bool (after numpy so we don't double-handle)
     if isinstance(v, bool):
         return v
+
+    # decimal.Decimal (Spark DECIMAL columns + SQL numeric literals like 1.5) ->
+    # float, so Excel receives a number, not text. Excel/JS use float64 anyway;
+    # very-high-precision decimals lose precision, which is inherent to a grid.
+    if isinstance(v, decimal.Decimal):
+        if v.is_nan():
+            return None
+        return float(v)
 
     # Python int / float already serialisable
     if isinstance(v, (int, float)):
