@@ -84,7 +84,7 @@ This add-in has **no backend server of its own**. Each user provides their own
 Spark Connect endpoint. The add-in stores only:
 
 - The endpoint host, port, and TLS flag (in `Office.context.document.settings`)
-- The bearer token (in `OfficeRuntime.storage` — never in the workbook file)
+- The bearer token (in `OfficeRuntime.storage` - never in the workbook file)
 
 What this means for distribution:
 - You distribute the add-in bundle (static HTML/JS/CSS).
@@ -109,12 +109,12 @@ Before submitting to AppSource:
 - [ ] Add-in tested on Windows (WebView2), Mac (WKWebView), and Excel on the web
 - [ ] Privacy policy URL added to `manifest.xml` (required for AppSource)
 - [ ] The manifest's `Id` GUID matches the one in source control (do not
-      regenerate — changing it breaks existing user installations)
+      regenerate - changing it breaks existing user installations)
 
 ### Updating the production origin in manifest.xml
 
 The manifest ships targeting `https://localhost:3000` (dev). Generate a
-production manifest with the bundled script — it substitutes the origin and
+production manifest with the bundled script - it substitutes the origin and
 prints the validate command:
 
 ```bash

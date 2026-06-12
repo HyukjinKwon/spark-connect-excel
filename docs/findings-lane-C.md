@@ -1,12 +1,12 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
-# findings-lane-C.md — Pyodide + pcw Runtime Wiring
+# findings-lane-C.md - Pyodide + pcw Runtime Wiring
 
 Lane C: `src/runtime/pyodideHost.ts` + `src/runtime/runPython.ts`.
 
 ---
 
-## 1. Worker creation — Blob shim (classic worker)
+## 1. Worker creation - Blob shim (classic worker)
 
 `worker_bootstrap.js` calls `importScripts(...)` on line 63, which is only
 available in **classic** (non-module) workers. Creating it with
@@ -35,8 +35,8 @@ self.PCW_WHEEL_URL = "pyspark-connect-web"; // micropip spec or explicit URL
 importScripts('/vendor/worker_bootstrap.js');
 ```
 
-This Blob is turned into an object URL and passed to `new Worker(blobUrl)` — no
-`{type:"module"}` — giving a classic worker whose first (and only) script sets
+This Blob is turned into an object URL and passed to `new Worker(blobUrl)` - no
+`{type:"module"}` - giving a classic worker whose first (and only) script sets
 the globals, then delegates to the real bootstrap.
 
 If `pyodideIndexUrl` is not overridden in `BootOptions`, the shim omits that
@@ -60,11 +60,11 @@ export function installBridge(worker) { ... }
 `installBridge(worker)` creates a `Bridge` instance and attaches a `"message"`
 listener to the worker. It handles two message types automatically:
 
-- `{type:"pcw_sab", control, data}` — calls `bridge.attach(control, data)`,
+- `{type:"pcw_sab", control, data}` - calls `bridge.attach(control, data)`,
   creating `Int32Array` / `Uint8Array` views over the SharedArrayBuffers that
   the worker allocated at boot. The worker re-posts this when it reallocates the
   data SAB for a larger payload.
-- `{type:"pcw_rpc"}` — nudge from the worker that a request is written into the
+- `{type:"pcw_rpc"}` - nudge from the worker that a request is written into the
   SAB. `bridge.handleRpc()` reads the header+body from the SAB, performs the
   real `fetch()` on the main thread, and writes the response back into the SAB,
   then calls `Atomics.notify` to wake the blocked Python thread.

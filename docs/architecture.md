@@ -1,12 +1,12 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
-# Architecture — spark-connect-excel
+# Architecture - spark-connect-excel
 
 ## Overview
 
 spark-connect-excel is an Excel add-in that runs a Spark SQL query against the
 user's own Spark Connect cluster, lands the result in a worksheet range, and
-lets the user refresh it or chart it — with **no backend server of its own**.
+lets the user refresh it or chart it - with **no backend server of its own**.
 
 The compute runs on the user's cluster; the query client runs in the browser via
 [pyspark-connect-web](https://github.com/HyukjinKwon/pyspark-client-wasm)
@@ -18,60 +18,60 @@ The compute runs on the user's cluster; the query client runs in the browser via
 
 ```
   User's Excel workbook
-  ┌─────────────────────────────────────────────────────────────────┐
-  │  Excel host (Windows WebView2 / Mac WKWebView / Excel-on-web)   │
-  │  ┌──────────────────────────────────────────────────────────┐   │
-  │  │  Task Pane  (taskpane.html / taskpane.ts)                │   │
-  │  │  • Connection form (host, port, TLS, token)              │   │
-  │  │  • SQL editor + row cap                                  │   │
-  │  │  • Run / Refresh / Insert Chart buttons                  │   │
-  │  │  • Error display                                         │   │
-  │  │                                                          │   │
-  │  │  SparkBridgeClient  ──── postMessage ────────────────────│───│──┐
-  │  └──────────────────────────────────────────────────────────┘   │  │
-  │                                                                  │  │
-  │  ┌──────────────────────────────────────────────────────────┐   │  │
-  │  │  COI Host Window  (Office Dialog — dialog.html)          │◄──│──┘
-  │  │                                                          │   │
-  │  │  Served with:                                            │   │
-  │  │    Cross-Origin-Opener-Policy: same-origin               │   │
-  │  │    Cross-Origin-Embedder-Policy: credentialless          │   │
-  │  │  → crossOriginIsolated === true → SharedArrayBuffer OK   │   │
-  │  │                                                          │   │
-  │  │  SparkBridgeHost  →  SparkBridgeClient (task pane)       │   │
-  │  │       │                                                  │   │
-  │  │  PyodideHost  (Web Worker + bridge.js SAB handshake)     │   │
-  │  │       │                                                  │   │
-  │  │  spark_excel_runtime.py  (loaded into Pyodide)           │   │
-  │  │       │  connect() / run_sql() / schema_of()             │   │
-  │  │       │                                                  │   │
-  │  │  pyspark_connect_web  (real PySpark Connect client)      │   │
-  │  │       │  grpc-web over fetch                             │   │
-  │  └───────┼──────────────────────────────────────────────────┘   │
-  └──────────┼──────────────────────────────────────────────────────┘
-             │  HTTP/HTTPS  (grpc-web frames)
-             ▼
-  ┌─────────────────────────────────────────────────────────────────┐
-  │  User's infrastructure                                          │
-  │                                                                 │
-  │  Envoy  :8081  (dev) / :8443 (prod, TLS)                       │
-  │    • CORS: allows add-in origin                                 │
-  │    • grpc_web filter: translates grpc-web → gRPC/HTTP2          │
-  │    • Prod: Lua gate checks Authorization: Bearer <token>        │
-  │             │  gRPC / HTTP2                                     │
-  │             ▼                                                   │
-  │  Spark Connect server  :15002 (Spark 4.x)                      │
-  └─────────────────────────────────────────────────────────────────┘
+  +-----------------------------------------------------------------+
+  |  Excel host (Windows WebView2 / Mac WKWebView / Excel-on-web)   |
+  |  +----------------------------------------------------------+   |
+  |  |  Task Pane  (taskpane.html / taskpane.ts)                |   |
+  |  |  - Connection form (host, port, TLS, token)              |   |
+  |  |  - SQL editor + row cap                                  |   |
+  |  |  - Run / Refresh / Insert Chart buttons                  |   |
+  |  |  - Error display                                         |   |
+  |  |                                                          |   |
+  |  |  SparkBridgeClient  ---- postMessage --------------------|---|--+
+  |  +----------------------------------------------------------+   |  |
+  |                                                                  |  |
+  |  +----------------------------------------------------------+   |  |
+  |  |  COI Host Window  (Office Dialog - dialog.html)          |<--|--+
+  |  |                                                          |   |
+  |  |  Served with:                                            |   |
+  |  |    Cross-Origin-Opener-Policy: same-origin               |   |
+  |  |    Cross-Origin-Embedder-Policy: credentialless          |   |
+  |  |  -> crossOriginIsolated === true -> SharedArrayBuffer OK   |   |
+  |  |                                                          |   |
+  |  |  SparkBridgeHost  ->  SparkBridgeClient (task pane)       |   |
+  |  |       |                                                  |   |
+  |  |  PyodideHost  (Web Worker + bridge.js SAB handshake)     |   |
+  |  |       |                                                  |   |
+  |  |  spark_excel_runtime.py  (loaded into Pyodide)           |   |
+  |  |       |  connect() / run_sql() / schema_of()             |   |
+  |  |       |                                                  |   |
+  |  |  pyspark_connect_web  (real PySpark Connect client)      |   |
+  |  |       |  grpc-web over fetch                             |   |
+  |  +-------+--------------------------------------------------+   |
+  +----------+------------------------------------------------------+
+             |  HTTP/HTTPS  (grpc-web frames)
+             v
+  +-----------------------------------------------------------------+
+  |  User's infrastructure                                          |
+  |                                                                 |
+  |  Envoy  :8081  (dev) / :8443 (prod, TLS)                       |
+  |    - CORS: allows add-in origin                                 |
+  |    - grpc_web filter: translates grpc-web -> gRPC/HTTP2          |
+  |    - Prod: Lua gate checks Authorization: Bearer <token>        |
+  |             |  gRPC / HTTP2                                     |
+  |             v                                                   |
+  |  Spark Connect server  :15002 (Spark 4.x)                      |
+  +-----------------------------------------------------------------+
 
-  pandas result (toPandas()) → SparkResult JSON
-       → Office.js range.values → worksheet cells + chart
+  pandas result (toPandas()) -> SparkResult JSON
+       -> Office.js range.values -> worksheet cells + chart
 ```
 
 ---
 
 ## Key design decisions
 
-### DECISIONS #1 — COI host is a separate Office Dialog window
+### DECISIONS #1 - COI host is a separate Office Dialog window
 
 `SharedArrayBuffer` (the backbone of pyspark-connect-web's blocking `.collect()`)
 requires cross-origin isolation (`crossOriginIsolated === true`). The task-pane
@@ -91,7 +91,7 @@ Cross-Origin-Embedder-Policy: credentialless
 giving us `crossOriginIsolated === true` without depending on Excel's embedding.
 The task pane acts as the UI and the Office range-writer; the dialog hosts Spark.
 
-### DECISIONS #2 — COEP is `credentialless`, not `require-corp`
+### DECISIONS #2 - COEP is `credentialless`, not `require-corp`
 
 `require-corp` would block Pyodide (loaded from jsDelivr CDN) and the
 pyspark-connect-web wheel (loaded from PyPI CDN) because those CDN origins do
@@ -100,26 +100,26 @@ cross-origin access to any resource that doesn't carry credentials (cookies/auth
 which covers CDN wheels. Chromium-based Office hosts (WebView2, Edge, Chrome)
 fully support `credentialless`. CI asserts its presence.
 
-### DECISIONS #3 — Reuse pyspark-connect-web; do not fork
+### DECISIONS #3 - Reuse pyspark-connect-web; do not fork
 
 The Python wheel is consumed from PyPI via `micropip.install()` inside Pyodide.
 Only three small browser JS glue files are copied into `public/vendor/` (they
 must be served same-origin): `worker_bootstrap.js`, `bridge.js`, and
 `coi-serviceworker.js`. These are unedited copies from upstream. See `docs/reuse.md`.
 
-### DECISIONS #6 — Bearer tokens never touch cells or document settings
+### DECISIONS #6 - Bearer tokens never touch cells or document settings
 
 Tokens live in `OfficeRuntime.storage` (roaming, opaque to the spreadsheet file)
 or in an in-memory fallback. `Office.context.document.settings` stores only the
 non-secret connection config (host, port, TLS flag). See `docs/security.md`.
 
-### DECISIONS #7 — Task pane never imports Pyodide/pcw
+### DECISIONS #7 - Task pane never imports Pyodide/pcw
 
 All Python and Spark code runs in the dialog. The task pane is pure Office.js +
 UI + the bridge client. This is enforced by TypeScript's `include` in
 `tsconfig.json` (task-pane files don't share a TS path with runtime files).
 
-### DECISIONS #8 — Marshalling in Python, parsing in TypeScript
+### DECISIONS #8 - Marshalling in Python, parsing in TypeScript
 
 The Python runtime returns a single JSON string shaped exactly like `SparkResult`.
 TypeScript only `JSON.parse`s it. No ad-hoc type coercion straddles the boundary.
@@ -140,9 +140,9 @@ TypeScript only `JSON.parse`s it. No ad-hoc type coercion straddles the boundary
 | SparkBridgeClient | `src/bridge/sparkBridgeClient.ts` | D | Task-pane-side SparkBridge impl |
 | Marshal helpers | `src/bridge/marshal.ts` | D | Parse JSON from Python runtime |
 | Python runtime | `python/spark_excel_runtime.py` | D | connect / run_sql / schema_of |
-| Range writer | `src/excel/rangeWriter.ts` | F | SparkResult → worksheet range |
-| Type formatter | `src/excel/typeFormat.ts` | F | Spark types → Excel number formats |
-| Binding | `src/excel/binding.ts` | G | Query→range persistence |
+| Range writer | `src/excel/rangeWriter.ts` | F | SparkResult -> worksheet range |
+| Type formatter | `src/excel/typeFormat.ts` | F | Spark types -> Excel number formats |
+| Binding | `src/excel/binding.ts` | G | Query->range persistence |
 | Refresh | `src/excel/refresh.ts` | G | Re-run query, rewrite range |
 | Charting | `src/excel/chart.ts` | H | inferChartType + insertChart |
 | Connection store | `src/connection/connectionStore.ts` | I | URI builder, token handling |
@@ -157,45 +157,45 @@ TypeScript only `JSON.parse`s it. No ad-hoc type coercion straddles the boundary
 
 ```
 User clicks "Run" in the task pane
-  │
-  ▼
+  |
+  v
 queryPanel.ts calls bridge.runSQL(sql, rowCap)
-  │  SparkBridgeClient
-  ▼
+  |  SparkBridgeClient
+  v
 encodeMessage({kind:"req", id, method:"runSQL", args:[sql, rowCap]})
-  │  dialog.messageChild(str)  ←── Office Dialog channel
-  ▼
+  |  dialog.messageChild(str)  <--- Office Dialog channel
+  v
 dialogHost.ts receives the message
-  │  SparkBridgeHost.runSQL(sql, rowCap)
-  ▼
-callPy("run_sql", sql, rowCap)  →  RuntimeHost.runPython(snippet)
-  │  postMessage({type:"pcw_run", src}) → Web Worker
-  ▼  (SAB + Atomics bridge; blocking in the worker)
+  |  SparkBridgeHost.runSQL(sql, rowCap)
+  v
+callPy("run_sql", sql, rowCap)  ->  RuntimeHost.runPython(snippet)
+  |  postMessage({type:"pcw_run", src}) -> Web Worker
+  v  (SAB + Atomics bridge; blocking in the worker)
 spark_excel_runtime.run_sql(sql, rowCap)
-  →  spark.sql(sql).limit(rowCap+1).toPandas()
-  →  JSON string (SparkResult shape)
-  ▼
-worker postMessage({type:"pcw_result", result}) → main thread
-  │  runPython() promise resolves with the JSON string
-  ▼
-parseResult(json)  →  SparkResult object
-  │  encodeMessage({kind:"res", id, ok:true, result:sparkResult})
-  │  Office.context.ui.messageParent(str)  ←── back to task pane
-  ▼
-SparkBridgeClient receives the response → pending promise resolves
-  │
-  ▼
-rangeWriter.writeResult(result, anchorRange)  →  range.values, number formats
-bindingStore.saveQueryBinding(q)  →  document settings
+  ->  spark.sql(sql).limit(rowCap+1).toPandas()
+  ->  JSON string (SparkResult shape)
+  v
+worker postMessage({type:"pcw_result", result}) -> main thread
+  |  runPython() promise resolves with the JSON string
+  v
+parseResult(json)  ->  SparkResult object
+  |  encodeMessage({kind:"res", id, ok:true, result:sparkResult})
+  |  Office.context.ui.messageParent(str)  <--- back to task pane
+  v
+SparkBridgeClient receives the response -> pending promise resolves
+  |
+  v
+rangeWriter.writeResult(result, anchorRange)  ->  range.values, number formats
+bindingStore.saveQueryBinding(q)  ->  document settings
 ```
 
 ---
 
 ## See also
 
-- `DECISIONS.md` — all architectural invariants
-- `API_CONTRACT.md` — the frozen SparkBridge seam
-- `docs/security.md` — threat model and token handling
-- `docs/reuse.md` — pyspark-connect-web provenance
-- `docs/installation.md` — how to build, dev, and sideload
-- `deploy/README.md` — Spark + Envoy stack
+- `DECISIONS.md` - all architectural invariants
+- `API_CONTRACT.md` - the frozen SparkBridge seam
+- `docs/security.md` - threat model and token handling
+- `docs/reuse.md` - pyspark-connect-web provenance
+- `docs/installation.md` - how to build, dev, and sideload
+- `deploy/README.md` - Spark + Envoy stack

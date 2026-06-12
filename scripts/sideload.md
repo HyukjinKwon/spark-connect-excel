@@ -10,9 +10,9 @@ AppSource. This is the standard development and team-deployment path.
 1. Start the HTTPS dev server: `npm run dev:https` (run `npx office-addin-dev-certs
    install` once first).
 2. Open **Excel on the web** in Microsoft Edge or Google Chrome.
-3. **Insert → Add-ins → Upload My Add-in** → choose `manifest.xml`.
+3. **Insert -> Add-ins -> Upload My Add-in** -> choose `manifest.xml`.
 
-That's it — no catalog, no admin, no desktop config. To share with others, host
+That's it - no catalog, no admin, no desktop config. To share with others, host
 the bundle and point the manifest at it (see `docs/distribution.md`), then they
 upload that `manifest.xml` the same way.
 
@@ -35,7 +35,7 @@ This command:
 1. Open Excel.
 2. Go to **File > Options > Trust Center > Trust Center Settings > Trusted Add-in Catalogs**.
 3. Add the URL of your manifest (e.g. `https://localhost:3000/manifest.xml`) as a trusted catalog.
-4. Check **Show in Menu** → OK.
+4. Check **Show in Menu** -> OK.
 5. Go to **Insert > My Add-ins > Shared Folder** and click **Spark Connect for Excel**.
 
 Alternatively, copy `manifest.xml` to:
@@ -64,7 +64,7 @@ Create the `wef/` directory if it doesn't exist, copy `manifest.xml` there, and 
 3. Browse to and upload `manifest.xml`.
 
 The add-in's `SourceLocation` must be accessible from the internet (or via a
-tunnel — see the ngrok tip below).
+tunnel - see the ngrok tip below).
 
 ## HTTPS for Windows/Mac
 
@@ -72,7 +72,7 @@ The dev server uses plain HTTP by default. Windows WebView2 and Mac WKWebView
 require HTTPS for the task pane. To enable HTTPS in dev:
 
 ```bash
-npx office-addin-dev-certs install   # once — installs an OS-trusted local cert
+npx office-addin-dev-certs install   # once - installs an OS-trusted local cert
 npm run dev:https                    # serves https://localhost:3000 (COI headers + TLS)
 ```
 
@@ -97,4 +97,4 @@ npx office-addin-debugging stop manifest.xml
 To remove the sideloaded add-in manually:
 - Windows: delete the manifest file from `%APPDATA%\Microsoft\Excel\XLSTART\`
 - Mac: delete the manifest from `~/Library/Containers/.../wef/`
-- Excel on the web: Insert > My Add-ins → context menu → Remove
+- Excel on the web: Insert > My Add-ins -> context menu -> Remove

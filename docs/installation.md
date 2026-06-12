@@ -13,8 +13,8 @@
 | Excel | 2019 / Microsoft 365 | Windows, Mac, or Excel on the web |
 
 > **Browser requirement:** The add-in requires a Chromium-based Excel host
-> (Windows WebView2, Edge, Chrome). `COEP: credentialless` — the mode needed
-> for `SharedArrayBuffer` — is a Chromium feature. Safari and Firefox are not
+> (Windows WebView2, Edge, Chrome). `COEP: credentialless` - the mode needed
+> for `SharedArrayBuffer` - is a Chromium feature. Safari and Firefox are not
 > supported in v0.
 
 ---
@@ -53,13 +53,13 @@ Office add-ins on Windows (WebView2) and Mac (WKWebView) require HTTPS for the
 task pane. Use `office-addin-dev-certs` to generate a local certificate:
 
 ```bash
-npx office-addin-dev-certs install   # once — installs an OS-trusted local cert
+npx office-addin-dev-certs install   # once - installs an OS-trusted local cert
 npm run dev:https                    # serves https://localhost:3000 with COI headers
 ```
 
 `npm run dev:https` sets `HTTPS=true`, which makes Vite load the trusted cert
 from `office-addin-dev-certs`. The cert is trusted by the OS so WebView2/WKWebView
-accept it. (Plain `npm run dev` stays HTTP — used for unit tests / the COI gate.)
+accept it. (Plain `npm run dev` stays HTTP - used for unit tests / the COI gate.)
 
 ---
 
@@ -67,7 +67,7 @@ accept it. (Plain `npm run dev` stays HTTP — used for unit tests / the COI gat
 
 ```bash
 npm run build
-# Produces dist/ — taskpane/taskpane.html + dialog/dialog.html + assets
+# Produces dist/ - taskpane/taskpane.html + dialog/dialog.html + assets
 ```
 
 Run the full check suite before building:
@@ -86,22 +86,22 @@ npm run build       # tsc --noEmit + vite build
 
 Sideloading installs the add-in without publishing it to AppSource.
 
-### Excel on the web — recommended (fewest steps, no admin)
+### Excel on the web - recommended (fewest steps, no admin)
 
 This is the lowest-friction path. **Same machine (dev):**
 
 1. Run `npm run dev:https` (and `npx office-addin-dev-certs install` once).
 2. Open **Excel on the web** in Microsoft Edge or Google Chrome.
-3. **Insert → Add-ins → Upload My Add-in** → choose `manifest.xml`.
+3. **Insert -> Add-ins -> Upload My Add-in** -> choose `manifest.xml`.
 4. The **Spark SQL** button appears on the Home ribbon.
 
 **To let other people install it**, the add-in must be hosted where they can
-reach it — host the built bundle (`npm run build` → `dist/`) on an HTTPS origin
+reach it - host the built bundle (`npm run build` -> `dist/`) on an HTTPS origin
 that sends the COI headers, then point the manifest at it:
 
 ```bash
 npm run build:manifest -- --origin https://your-addin-host.example.com
-# share dist/manifest.xml — recipients do the same 3 upload steps
+# share dist/manifest.xml - recipients do the same 3 upload steps
 ```
 
 (For a quick demo from your own machine, expose `https://localhost:3000` with a
@@ -167,7 +167,7 @@ sc://localhost:8081/;transport=grpcweb
 | Script | What it does |
 |--------|-------------|
 | `npm run dev` | Start Vite dev server |
-| `npm run build` | Type-check + Vite build → `dist/` |
+| `npm run build` | Type-check + Vite build -> `dist/` |
 | `npm run preview` | Serve `dist/` on port 3000 (for e2e tests) |
 | `npm run typecheck` | `tsc --noEmit` only |
 | `npm run lint` | ESLint + Prettier check |

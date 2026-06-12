@@ -1,11 +1,11 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
-# public/vendor — reused pyspark-connect-web browser glue
+# public/vendor - reused pyspark-connect-web browser glue
 
 These files are copied **verbatim** (Apache-2.0) from
 [`pyspark-connect-web`](https://github.com/HyukjinKwon/pyspark-client-wasm) and
 must be served **same-origin** (they cannot come from a CDN). Do not edit them
-here — fix upstream and re-copy.
+here - fix upstream and re-copy.
 
 | File | Upstream path | Role |
 |------|---------------|------|

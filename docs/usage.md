@@ -4,15 +4,15 @@
 
 ## Overview
 
-spark-connect-excel adds a **Spark SQL** button to the Excel ribbon (Home tab →
+spark-connect-excel adds a **Spark SQL** button to the Excel ribbon (Home tab ->
 Spark Connect group). Clicking it opens the task pane where you can query your
 Spark Connect cluster and land the result directly in a worksheet range.
 
 ---
 
-## Step 1 — Connect to your Spark cluster
+## Step 1 - Connect to your Spark cluster
 
-Open the task pane (Home → Spark SQL). In the **Connection** section:
+Open the task pane (Home -> Spark SQL). In the **Connection** section:
 
 | Field | Description |
 |-------|-------------|
@@ -23,8 +23,8 @@ Open the task pane (Home → Spark SQL). In the **Connection** section:
 
 Click **Connect**. The status indicator will show:
 
-- `Connecting…` — Pyodide is booting (first time only; ~10–30s)
-- `Connected` — the Spark session is live
+- `Connecting...` - Pyodide is booting (first time only; ~10-30s)
+- `Connected` - the Spark session is live
 - An error message if the endpoint is unreachable
 
 > **Tip:** The Pyodide cold-start happens once per browser session. Subsequent
@@ -34,7 +34,7 @@ Click **Connect**. The status indicator will show:
 
 ---
 
-## Step 2 — Write a SQL query
+## Step 2 - Write a SQL query
 
 In the **Query** section:
 
@@ -69,50 +69,50 @@ WHERE o.status = 'shipped'
 
 ---
 
-## Step 3 — Run the query
+## Step 3 - Run the query
 
 Click **Run**. The add-in:
 
 1. Sends the SQL to the Spark Connect server via the Envoy proxy.
 2. Waits for the result (shows a spinner during execution).
 3. Writes a **header row** + **typed data rows** to the destination range:
-   - Integer columns → Excel integer format (`0`)
-   - Float/decimal columns → two-decimal format (`0.00` or `0.0000` based on scale)
-   - Date columns → `yyyy-mm-dd`
-   - Timestamp columns → `yyyy-mm-dd hh:mm:ss`
-   - Boolean/string columns → General (text)
+   - Integer columns -> Excel integer format (`0`)
+   - Float/decimal columns -> two-decimal format (`0.00` or `0.0000` based on scale)
+   - Date columns -> `yyyy-mm-dd`
+   - Timestamp columns -> `yyyy-mm-dd hh:mm:ss`
+   - Boolean/string columns -> General (text)
 4. If the result was truncated a **truncation banner** (amber background) appears
    above the header row.
 
-<!-- Screenshot placeholder: Result in worksheet — header row + data rows -->
+<!-- Screenshot placeholder: Result in worksheet - header row + data rows -->
 
 ---
 
-## Step 4 — Refresh
+## Step 4 - Refresh
 
 The query and destination are **bound** to the range. To re-execute the same
 query and update the range with fresh data:
 
 - Click **Refresh** in the task pane, or
-- (Future) use Ribbon → Refresh All for all bound ranges in the workbook.
+- (Future) use Ribbon -> Refresh All for all bound ranges in the workbook.
 
 The binding stores the query text, endpoint host, row cap, and destination in
-the workbook's document settings (not in cells and never the bearer token — see
+the workbook's document settings (not in cells and never the bearer token - see
 `docs/security.md`).
 
 <!-- Screenshot placeholder: Refresh button in the task pane -->
 
 ---
 
-## Step 5 — Insert a chart
+## Step 5 - Insert a chart
 
 After a successful run, click **Insert Chart**. The add-in:
 
 1. Inspects the result schema and automatically chooses a chart type:
-   - Temporal column + numeric column(s) → **Line chart** (time series)
-   - Categorical column + numeric column(s) → **Clustered column chart**
-   - Two or more numeric columns, no category → **XY Scatter**
-   - Default → **Clustered column**
+   - Temporal column + numeric column(s) -> **Line chart** (time series)
+   - Categorical column + numeric column(s) -> **Clustered column chart**
+   - Two or more numeric columns, no category -> **XY Scatter**
+   - Default -> **Clustered column**
 2. Creates a native Excel chart bound to the result range.
 3. Positions the chart to the right of the data.
 
@@ -154,8 +154,8 @@ local timezone settings.
 
 | Symptom | Likely cause | Fix |
 |---------|-------------|-----|
-| "Not connected — call connect() first" | `connect()` was not called yet | Click Connect in the task pane |
-| "Spark engine starting…" for > 60s | Pyodide cold-start on slow connection | Wait; Pyodide is ~20 MB |
+| "Not connected - call connect() first" | `connect()` was not called yet | Click Connect in the task pane |
+| "Spark engine starting..." for > 60s | Pyodide cold-start on slow connection | Wait; Pyodide is ~20 MB |
 | HTTP 401 from Envoy | Missing or wrong bearer token | Enter token in the connection form |
 | `crossOriginIsolated === false` | COI headers not served | Check the deploy/ stack or dev server config |
 | Chart missing data | Empty result set | Verify the SQL returns rows; check row cap |

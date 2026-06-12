@@ -1,6 +1,6 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
-# Lane I findings — Connection/Auth + Deploy
+# Lane I findings - Connection/Auth + Deploy
 
 ## CORS origins
 
@@ -13,8 +13,8 @@ origins:
 ^https?://localhost:(3000|8000)$
 ```
 
-- `http://localhost:3000` — Vite dev server (`npm run dev`).
-- `http://localhost:8000` — the static host listener in the compose stack.
+- `http://localhost:3000` - Vite dev server (`npm run dev`).
+- `http://localhost:8000` - the static host listener in the compose stack.
 
 The regex anchors at both ends so it cannot match `localhost:8000.evil.com`.
 No wildcard `.*` is used.
@@ -36,14 +36,14 @@ Bearer token flows through CORS preflights to the Lua gate and then upstream.
 ## Token forwarding mechanism
 
 1. **Task pane:** `saveToken(token)` writes to `OfficeRuntime.storage` (roaming,
-   not in the .xlsx — DECISIONS #6). Falls back to an in-memory `Map` when
+   not in the .xlsx - DECISIONS #6). Falls back to an in-memory `Map` when
    `OfficeRuntime.storage` is unavailable (tests, offline). Never written to
    `Office.context.document.settings` or any cell.
 
 2. **Envoy proxy:** the `authorization` header passes through to Spark Connect
    unchanged. In prod, a Lua filter rejects non-OPTIONS requests lacking
    `Authorization: Bearer <token>` (HTTP 401). OPTIONS preflights are let
-   through unconditionally. The Lua gate checks presence only — replace with
+   through unconditionally. The Lua gate checks presence only - replace with
    `jwt_authn` or `ext_authz` for signature validation (sketched in
    `deploy/envoy.prod.yaml`).
 
@@ -59,7 +59,7 @@ Cross-Origin-Embedder-Policy: credentialless
 CDNs do not send `Cross-Origin-Resource-Policy` headers. `credentialless` grants
 no-credentials cross-origin access without requiring CORP opt-in from the
 resource server. `crossOriginIsolated` becomes `true` under `credentialless` in
-Chromium-based Office hosts (WebView2, Edge) — the hosts we target. DECISIONS #2
+Chromium-based Office hosts (WebView2, Edge) - the hosts we target. DECISIONS #2
 locks this choice and CI asserts it.
 
 ## Connection string format

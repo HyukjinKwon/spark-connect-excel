@@ -1,6 +1,6 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
-# Dependency Reuse — pyspark-connect-web
+# Dependency Reuse - pyspark-connect-web
 
 ## What we reuse
 

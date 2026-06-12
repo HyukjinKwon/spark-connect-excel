@@ -6,7 +6,7 @@ This directory contains the Playwright end-to-end tests for spark-connect-excel.
 
 ## What runs automatically (no Excel or Spark required)
 
-### `coi.spec.ts` — the COI gate (LIVE)
+### `coi.spec.ts` - the COI gate (LIVE)
 
 The most important test in the repo. Asserts:
 
@@ -19,7 +19,7 @@ The most important test in the repo. Asserts:
 These checks can run against the built `dist/` directory using `vite preview`
 (which sets the COI headers defined in `vite.config.ts`). No Excel host, no Spark
 cluster, and no Office.js are required. The dialog page may log JavaScript errors
-about Office.js not loading (expected — there is no Office host), but the COI
+about Office.js not loading (expected - there is no Office host), but the COI
 header test passes before any scripts run.
 
 Why this test matters: pyspark-connect-web's `SharedArrayBuffer`-based blocking
@@ -56,9 +56,9 @@ Only Chromium is configured (see `playwright.config.ts`). This is intentional:
 
 ## What is deferred (requires Excel + Spark)
 
-### `query-flow.spec.ts` — the Spark/Excel matrix (DEFERRED)
+### `query-flow.spec.ts` - the Spark/Excel matrix (DEFERRED)
 
-These tests cover the full connect → runSQL → range → chart → refresh flow
+These tests cover the full connect -> runSQL -> range -> chart -> refresh flow
 against a real Spark Connect server and a real Excel host. They are:
 
 - Marked `test.fixme` in the Playwright report.
@@ -138,7 +138,7 @@ PW_CHANNEL=chrome npm run test:e2e:coi
 `PW_CHANNEL` is honored by `playwright.config.ts`; unset (CI) uses the bundled
 Chromium. The five assertions are: `crossOriginIsolated === true`,
 `SharedArrayBuffer` present, `Atomics` present, COOP `same-origin`, COEP
-`credentialless` — i.e. the SharedArrayBuffer prerequisite the whole runtime
+`credentialless` - i.e. the SharedArrayBuffer prerequisite the whole runtime
 rests on.
 
 ## Adding new live tests

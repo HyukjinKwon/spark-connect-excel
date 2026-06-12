@@ -5,7 +5,7 @@
 ## 1. Bearer-token / auth mechanism
 
 **Mechanism chosen:** Append `token=<value>` as a URI parameter to the
-`sc://…;transport=grpcweb` connection string.
+`sc://...;transport=grpcweb` connection string.
 
 ```python
 effective_uri = uri.rstrip(";") + ";" + f"token={token}"

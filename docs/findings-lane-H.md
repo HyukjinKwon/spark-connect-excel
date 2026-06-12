@@ -1,6 +1,6 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
-# Lane H findings — Native Excel chart insertion
+# Lane H findings - Native Excel chart insertion
 
 ## 1. Files delivered by Lane H
 
@@ -18,19 +18,19 @@ Rules are evaluated in priority order. The first matching rule wins.
 
 | Priority | Condition | ChartKind returned | Rationale |
 |----------|-----------|--------------------|-----------|
-| 1 | ≥1 temporal column **and** ≥1 numeric | `"line"` | Time-series data reads best as a line; temporal col drives X axis |
-| 2 | Exactly 1 categorical + 1 numeric | `"columnClustered"` | Classic bar chart — one dimension, one measure |
-| 3 | 1 categorical + ≥2 numerics | `"columnClustered"` | Multi-measure bar; clustered over stacked because it preserves individual series magnitude readability. Callers can override via `opts.chartType`. |
-| 4 | ≥2 numerics and 0 categoricals | `"xyScatter"` | Correlation / scatter plot when there is no categorical axis |
+| 1 | >=1 temporal column **and** >=1 numeric | `"line"` | Time-series data reads best as a line; temporal col drives X axis |
+| 2 | Exactly 1 categorical + 1 numeric | `"columnClustered"` | Classic bar chart - one dimension, one measure |
+| 3 | 1 categorical + >=2 numerics | `"columnClustered"` | Multi-measure bar; clustered over stacked because it preserves individual series magnitude readability. Callers can override via `opts.chartType`. |
+| 4 | >=2 numerics and 0 categoricals | `"xyScatter"` | Correlation / scatter plot when there is no categorical axis |
 | 5 | Anything else | `"columnClustered"` | Safe default; always produces a valid chart |
 
 ### Spark type classifiers
 
 ```
-isNumeric     → bigint | int | integer | smallint | tinyint | double | float |
+isNumeric     -> bigint | int | integer | smallint | tinyint | double | float |
                 real | decimal(...) | numeric(...)
-isTemporal    → date | timestamp | timestamp_ntz | timestamp_ltz
-isCategorical → string | boolean | bool | char(...) | varchar(...)
+isTemporal    -> date | timestamp | timestamp_ntz | timestamp_ltz
+isCategorical -> string | boolean | bool | char(...) | varchar(...)
 ```
 
 Matching is **case-insensitive** (`.toLowerCase()`); prefix matching handles
@@ -59,7 +59,7 @@ Office host is guaranteed to be present.
 ```
 inferChartType(schema)  -->  ChartKind (string)     <- pure, testable in jsdom
 toExcelChartType(kind)  -->  Excel.ChartType         <- Office.js required
-worksheet.charts.add(…)                              <- Excel.run only
+worksheet.charts.add(...)                              <- Excel.run only
 ```
 
 ### Impact on Lane E
@@ -80,14 +80,14 @@ export async function insertChart(
 ): Promise<InsertChartResult>
 ```
 
-- **Guard:** throws `Error("Not enough data to chart: …")` if `info.rowCount === 0`
+- **Guard:** throws `Error("Not enough data to chart: ...")` if `info.rowCount === 0`
   or `schema.length < 2`.
 - **Data range:** uses `info.dataRangeAddress` (header + body, as written by Lane F).
   `Excel.ChartSeriesBy.auto` lets Excel pick row vs. column series orientation.
 - **Title:** derived from schema column names if `opts.title` is not provided.
 - **Position:** placed to the right of the data range using `chart.setPosition`.
   Top-left = one column past the data's rightmost column, row 1; spans 15 rows x 8 cols.
-- **Returns:** `{ chartName: string }` — the Office-assigned chart object name.
+- **Returns:** `{ chartName: string }` - the Office-assigned chart object name.
 
 ---
 
@@ -100,7 +100,7 @@ by Lane F's `rangeWriter.ts`. Once Lane F ships, replace the local declaration w
 import type { WriteResultInfo } from "./rangeWriter.js";
 ```
 
-No functional changes required — the shapes are identical by contract.
+No functional changes required - the shapes are identical by contract.
 
 ---
 

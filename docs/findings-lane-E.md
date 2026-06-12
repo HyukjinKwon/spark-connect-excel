@@ -1,41 +1,41 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
-# findings-lane-E.md — Query UX (Lane E)
+# findings-lane-E.md - Query UX (Lane E)
 
 ## Files delivered
 
 | File | Purpose |
 |------|---------|
-| `src/taskpane/taskpane.ts` | Entry point: `Office.onReady → boot()`. Thin — only lifecycle + wiring. |
+| `src/taskpane/taskpane.ts` | Entry point: `Office.onReady -> boot()`. Thin - only lifecycle + wiring. |
 | `src/taskpane/queryPanel.ts` | All UI logic: connection, SQL editor, run/cancel, saved queries, chart. |
 | `src/taskpane/ui.css` | Stylesheet for the narrow (~320 px) task pane. Spark orange `#E25A1C` accent. |
 
 ## Run flow
 
 1. **Boot** (`taskpane.ts`):
-   - `Office.onReady` fires → `boot()`.
+   - `Office.onReady` fires -> `boot()`.
    - Renders the pane chrome (header + scrollable body).
    - Calls `createDialogBridge(dialog.html)` to open the COI host dialog window.
    - Shows an `sc-engine-banner` while `bridge.ensureReady()` runs in the background.
    - `renderQueryPanel(body, bridge)` is called immediately so the user can configure the connection while Pyodide boots.
 
-2. **Connection** (`queryPanel.ts → renderConnectionForm`):
+2. **Connection** (`queryPanel.ts -> renderConnectionForm`):
    - Lane I's `renderConnectionForm` owns all form controls.
    - On submit: `saveConnection` (non-secret config) + `saveToken` (secure); then `bridge.ensureReady()` + `bridge.connect(uri, {token})`.
    - On success: the Connection section auto-collapses.
 
-3. **Run flow** (`queryPanel.ts → handleRun`):
+3. **Run flow** (`queryPanel.ts -> handleRun`):
    - Validates SQL + row cap locally.
-   - `bridge.ensureReady()` (idempotent) → `bridge.connect(...)` → `bridge.runSQL(sql, rowCap)`.
-   - `writeResult(result, {})` → `WriteResultInfo`.
-   - `saveQueryBinding({ queryId, sql, rowCap, sheetName, anchorAddress, endpointHost, createdAt })` — token intentionally absent (DECISIONS #6).
+   - `bridge.ensureReady()` (idempotent) -> `bridge.connect(...)` -> `bridge.runSQL(sql, rowCap)`.
+   - `writeResult(result, {})` -> `WriteResultInfo`.
+   - `saveQueryBinding({ queryId, sql, rowCap, sheetName, anchorAddress, endpointHost, createdAt })` - token intentionally absent (DECISIONS #6).
    - Success: row count + truncation notice; "Insert chart" button appears.
 
 4. **Insert chart**: `insertChart(lastWriteInfo, lastResultSchema)` on button click.
 
-5. **Refresh single**: `refreshQuery(queryId, bridge)` → `RefreshResult`.
+5. **Refresh single**: `refreshQuery(queryId, bridge)` -> `RefreshResult`.
 
-6. **Refresh All**: `refreshAll(bridge)` → `RefreshResult[]`; each item status updated in-place.
+6. **Refresh All**: `refreshAll(bridge)` -> `RefreshResult[]`; each item status updated in-place.
 
 ## Seam assumptions
 
@@ -60,4 +60,4 @@
 - **Background `ensureReady()`**: Pyodide boot is kicked off on page load in the background; the engine banner shows progress. The UI is not blocked.
 - **Dialog opened eagerly**: the dialog is opened once at boot (not lazily on first Run) to hide Pyodide's cold-start latency.
 - **No global state**: the panel API is stored in a `WeakMap` keyed on the body element rather than a module-level variable, keeping the module testable.
-- **Framework-free DOM**: `el(tag, attrs, text?)` + `div(className, ...children)` — no React/Vue/Lit.
+- **Framework-free DOM**: `el(tag, attrs, text?)` + `div(className, ...children)` - no React/Vue/Lit.

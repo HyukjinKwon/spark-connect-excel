@@ -1,6 +1,6 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
-# deploy/ — Spark Connect + Envoy grpc-web proxy for spark-connect-excel
+# deploy/ - Spark Connect + Envoy grpc-web proxy for spark-connect-excel
 
 This directory brings up the **server side** of the spark-connect-excel add-in:
 a Spark 4.x Connect server fronted by an Envoy `grpc_web` proxy, plus a static
@@ -9,10 +9,10 @@ cross-origin-isolation headers.
 
 ```
 Excel add-in dialog (Office Dialog window, COEP credentialless)
-   │  sc://localhost:8081/;transport=grpcweb   (grpc-web over fetch)
-   ▼
-Envoy :8081  ──grpc_web filter──▶  Spark Connect :15002 (gRPC/HTTP2)
-Envoy :8000  ── static add-in (dist/)  with COOP/COEP ──▶  halverneus static server
+   |  sc://localhost:8081/;transport=grpcweb   (grpc-web over fetch)
+   v
+Envoy :8081  --grpc_web filter-->  Spark Connect :15002 (gRPC/HTTP2)
+Envoy :8000  -- static add-in (dist/)  with COOP/COEP -->  halverneus static server
 ```
 
 ## Ports
@@ -70,7 +70,7 @@ docker compose -f deploy/compose.yaml -f deploy/compose.prod.yaml up -d
 The add-in uses the `sc://host:port/;transport=grpcweb` URI scheme understood
 by pyspark-connect-web. TLS is determined by the scheme used to reach the Envoy
 proxy (plaintext port 8081 in dev; HTTPS port 8443 in prod). The `sc://` form
-always carries `transport=grpcweb` regardless of TLS — the proxy negotiates TLS
+always carries `transport=grpcweb` regardless of TLS - the proxy negotiates TLS
 externally.
 
 Example URIs:
@@ -95,12 +95,12 @@ WebView2 / Mac WKWebView) over HTTPS for prod (or HTTP for localhost dev).
 ## COOP/COEP and why `credentialless`
 
 The Office Dialog window (which hosts Pyodide + pyspark-connect-web) requires
-`crossOriginIsolated === true` to use `SharedArrayBuffer` — the backbone of
+`crossOriginIsolated === true` to use `SharedArrayBuffer` - the backbone of
 pyspark-connect-web's blocking `.collect()`. That requires:
 
 ```
 Cross-Origin-Opener-Policy: same-origin
-Cross-Origin-Embedder-Policy: credentialless   ← NOT require-corp
+Cross-Origin-Embedder-Policy: credentialless   <- NOT require-corp
 ```
 
 We use `credentialless` (DECISIONS #2) rather than `require-corp` because:
@@ -118,8 +118,8 @@ We use `credentialless` (DECISIONS #2) rather than `require-corp` because:
 
 | Config | CORS origin(s) allowed |
 |--------|------------------------|
-| Dev (`envoy.yaml`) | `http://localhost:3000` (Vite dev server), `http://localhost:8000` (static host) — via regex `^https?://localhost:(3000\|8000)$` |
-| Prod (`envoy.prod.yaml`) | `https://YOUR-ADDIN-ORIGIN.example.com` — exact-string match only, no wildcard |
+| Dev (`envoy.yaml`) | `http://localhost:3000` (Vite dev server), `http://localhost:8000` (static host) - via regex `^https?://localhost:(3000\|8000)$` |
+| Prod (`envoy.prod.yaml`) | `https://YOUR-ADDIN-ORIGIN.example.com` - exact-string match only, no wildcard |
 
 The `authorization` request header is included in `allow_headers` on both
 configs so the Bearer token flows through CORS preflights to the Envoy proxy,
@@ -164,7 +164,7 @@ curl -i -X POST https://localhost:8443/spark.connect.SparkConnectService/Execute
   -H "x-grpc-web: 1" \
   -H "content-type: application/grpc-web+proto" \
   -H "Authorization: Bearer mytoken"
-# Expect: HTTP 200 (or gRPC error — not 401)
+# Expect: HTTP 200 (or gRPC error - not 401)
 ```
 
 ## Token forwarding mechanism
@@ -172,12 +172,12 @@ curl -i -X POST https://localhost:8443/spark.connect.SparkConnectService/Execute
 The `authorization` header is:
 1. Listed in `allow_headers` in both dev and prod CORS configs so the browser
    CORS preflight allows it.
-2. NOT stripped by any Envoy filter — it passes through to the Spark Connect
+2. NOT stripped by any Envoy filter - it passes through to the Spark Connect
    upstream unchanged.
 3. Enforced (presence-only) in prod by a Lua filter before the router, which
    returns 401 if the header is absent or does not start with `Bearer `.
 4. Stored **only** in `OfficeRuntime.storage` (roaming, not in the .xlsx) by
-   the task-pane's `connectionStore.saveToken()` — never in document settings
+   the task-pane's `connectionStore.saveToken()` - never in document settings
    or a cell (DECISIONS #6).
 
 Replace the Lua gate with `jwt_authn` or `ext_authz` for signature validation.

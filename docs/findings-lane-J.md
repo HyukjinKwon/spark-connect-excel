@@ -1,6 +1,6 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
-# Lane J findings — Packaging, Distribution, E2E, and Docs
+# Lane J findings - Packaging, Distribution, E2E, and Docs
 
 **Date:** 2026-06-12
 
@@ -12,7 +12,7 @@
 
 | Test | File | What it asserts |
 |------|------|----------------|
-| COI gate — crossOriginIsolated | `tests/e2e/coi.spec.ts` | `self.crossOriginIsolated === true` against built `dist/` via `vite preview` |
+| COI gate - crossOriginIsolated | `tests/e2e/coi.spec.ts` | `self.crossOriginIsolated === true` against built `dist/` via `vite preview` |
 | SAB availability | `tests/e2e/coi.spec.ts` | `typeof SharedArrayBuffer !== 'undefined'` |
 | Atomics availability | `tests/e2e/coi.spec.ts` | `typeof Atomics !== 'undefined'` |
 | COOP header | `tests/e2e/coi.spec.ts` | `Cross-Origin-Opener-Policy: same-origin` in response headers |

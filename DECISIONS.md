@@ -1,6 +1,6 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
-# DECISIONS.md — invariants (keep these green)
+# DECISIONS.md - invariants (keep these green)
 
 Locked architectural decisions. Each has a guard (test or CI check) where
 practical. Changing one requires a note in `COORDINATION.md`.
@@ -27,9 +27,9 @@ practical. Changing one requires a note in `COORDINATION.md`.
 
 4. **SQL is the product surface *in the Excel add-in*.** Excel users query; they
    do not author DataFrames, so the task pane exposes `runSQL` only. Pushdown is
-   the norm — bring back the small aggregated result. The standalone **web demo**
+   the norm - bring back the small aggregated result. The standalone **web demo**
    (`src/demo/`) is developer-facing and intentionally exposes **both** SQL and a
-   Python mode (`host.runPython`, `spark` pre-bound) — that surface showcases the
+   Python mode (`host.runPython`, `spark` pre-bound) - that surface showcases the
    full PySpark client. The Excel add-in stays SQL-first.
 
 5. **Results are row-capped Excel-side (default 10k).** `runSQL` runs

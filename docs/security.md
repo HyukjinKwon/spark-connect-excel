@@ -23,7 +23,7 @@ contexts (`crossOriginIsolated === true`). Without this:
 - The Pyodide SAB bridge cannot function.
 - No Spark queries can run.
 
-This is not just a performance concern — COI is a hard requirement.
+This is not just a performance concern - COI is a hard requirement.
 
 ### How we achieve it (DECISIONS #1, #2)
 
@@ -101,7 +101,7 @@ The Envoy proxy is the enforcement point:
 allow-origin regex: ^https?://localhost:(3000|8000)$
 ```
 
-Anchored at both ends — `localhost:8000.evil.com` does not match.
+Anchored at both ends - `localhost:8000.evil.com` does not match.
 
 ### Prod stack (`deploy/envoy.prod.yaml`)
 
@@ -119,7 +119,7 @@ No wildcard; exact-string match only. The `authorization` header is in
 For production deployments:
 
 - The Envoy proxy terminates TLS on port 8443.
-- The `sc://` URI still uses `transport=grpcweb` — TLS is implied by the
+- The `sc://` URI still uses `transport=grpcweb` - TLS is implied by the
   proxy, not the URI scheme.
 - The browser requires HTTPS for `crossOriginIsolated` off localhost.
 - Provide a real TLS certificate (`deploy/certs/tls.crt` + `tls.key`);

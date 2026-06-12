@@ -1,6 +1,6 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
-# Lane F findings — Range writer & type formatting
+# Lane F findings - Range writer & type formatting
 
 **Date:** 2026-06-12
 
@@ -47,7 +47,7 @@ rather than triggering an Office.js type error or writing `NaN` into the grid.
 
 ## 2. Truncation banner placement
 
-The spec (API_CONTRACT.md §4) calls for a "clearly-formatted note one row ABOVE
+The spec (API_CONTRACT.md section 4) calls for a "clearly-formatted note one row ABOVE
 the header."
 
 ### Preferred path (anchor row > 1)

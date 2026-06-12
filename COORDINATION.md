@@ -1,10 +1,10 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
-# spark-connect-excel — Team Coordination
+# spark-connect-excel - Team Coordination
 
 **Goal:** An Excel add-in that runs a **Spark SQL query against the user's own
 Spark Connect cluster**, lands the result in a worksheet range, refreshes it, and
-charts it — **with no backend server**, by hosting
+charts it - **with no backend server**, by hosting
 [`pyspark-connect-web`](https://github.com/HyukjinKwon/pyspark-client-wasm)
 (real PySpark Connect client, in-browser via Pyodide) inside the add-in.
 
@@ -16,7 +16,7 @@ License: Apache-2.0 header on every source file. We **reuse** pyspark-connect-we
 `DECISIONS.md`, `API_CONTRACT.md`.
 
 ## The frozen seam
-`src/seam.ts` defines `SparkBridge` (the async API) + the task-pane⟷dialog message
+`src/seam.ts` defines `SparkBridge` (the async API) + the task-pane<->dialog message
 envelope. Build against it; if you need a change, edit `src/seam.ts` AND append a
 note here first.
 
@@ -45,12 +45,12 @@ note here first.
 
 ## Notes log (newest last)
 - INTEGRATOR 2026-06-12: Scaffolded repo; froze the seam in `src/seam.ts`
-  (`SparkBridge` + message envelope). Locked v0 = SQL → range → refresh → chart,
+  (`SparkBridge` + message envelope). Locked v0 = SQL -> range -> refresh -> chart,
   zero backend. COI host = Office Dialog window with COEP `credentialless`
   (DECISIONS #1/#2). Reuse pcw JS glue in `public/vendor/` (unedited). Lanes:
   claim your row and build against the seam. Hardest seam: D's `SparkBridgeHost`
-  ⟷ C's `__pcwRunPython` ⟷ the Python runtime — agree on JSON shapes here before
-  diverging (they're pinned in `API_CONTRACT.md` §3).
+  <-> C's `__pcwRunPython` <-> the Python runtime - agree on JSON shapes here before
+  diverging (they're pinned in `API_CONTRACT.md` section 3).
 - INTEGRATOR 2026-06-12: All 10 lanes landed and integrated. Fixes applied at the
   seam: Office dialog event-handler union typing (DialogMessageReceived /
   DialogEventReceived); `OfficeRuntime.storage` reached via `globalThis` (no
@@ -65,16 +65,16 @@ note here first.
   in-Excel Office/Spark e2e matrix and a headless-browser `crossOriginIsolated`
   assertion (Chromium download was unavailable locally; CI `e2e.yml` runs it).
 - INTEGRATOR 2026-06-12 (finishing pass): Closed 2 of the 3 deferred items.
-  (1) **COI gate now verified in a real browser** — ran `coi.spec.ts` against
+  (1) **COI gate now verified in a real browser** - ran `coi.spec.ts` against
   system Chrome (`PW_CHANNEL=chrome`, added to `playwright.config.ts`): all 5
   assertions pass (`crossOriginIsolated===true`, SharedArrayBuffer, Atomics, COOP
   same-origin, COEP credentialless). The architecture's make-or-break prerequisite
   is empirically proven, not just header-inferred. (2) **Production manifest
   generator** `scripts/build-manifest.mjs` + `npm run build:manifest -- --origin
-  https://…` substitutes the dev origin and validates (closes the localhost
+  https://...` substitutes the dev origin and validates (closes the localhost
   placeholder). Fixed `test:e2e` to point at the config; added `test:e2e:coi`.
-  **Still genuinely deferred (cannot run here):** the in-Excel connect→range→chart
-  matrix — it needs a real Excel host + a running Spark Connect cluster + the
+  **Still genuinely deferred (cannot run here):** the in-Excel connect->range->chart
+  matrix - it needs a real Excel host + a running Spark Connect cluster + the
   pyspark-connect-web wheel published to PyPI (micropip installs it by name). Once
   the wheel is on PyPI and a cluster is up, sideload + run `query-flow.spec.ts`
   shape manually per `tests/e2e/README.md`.
