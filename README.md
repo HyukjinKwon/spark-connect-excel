@@ -85,8 +85,16 @@ With a Spark Connect server running, start the add-in:
 curl -fsSL https://raw.githubusercontent.com/HyukjinKwon/spark-connect-excel/main/scripts/quickstart.sh | bash
 ```
 
-Then in Excel on the web (Edge/Chrome): **Insert -> Add-ins -> Upload My Add-in
--> choose `manifest.xml`**. The **Spark SQL** button appears on the Home ribbon.
+Then in Excel on the web (Edge/Chrome): **Home -> Add-ins -> MY ADD-INS ->
+"Choose your add-in manifest"** -> pick `manifest.xml`. (The Add-ins button is on
+the **Home** tab in current Excel on the web; older builds put it under
+**Insert**.) The **Spark SQL** button then appears on the Home ribbon.
+
+> **Requires a work/school Microsoft 365 account.** Personal Microsoft accounts
+> ("Buy Microsoft 365" in the title bar) do not show the Add-ins button or
+> "Upload My Add-in" at all - Microsoft disables add-in sideloading for consumer
+> accounts. Sign in with a work/school account and save the workbook to its
+> OneDrive/SharePoint. (Excel desktop sideloads regardless - see below.)
 
 ### Try with Excel on Windows / Mac desktop (sideloads)
 

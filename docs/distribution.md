@@ -18,7 +18,8 @@ See [installation.md](installation.md) for step-by-step instructions.
 ### 2. AppSource (public distribution)
 
 AppSource submission makes the add-in available to any Microsoft 365 user via
-**Insert > Get Add-ins**. This path requires a Microsoft Partner Center account,
+**Home (or Insert) > Add-ins > Store**. This path requires a Microsoft Partner
+Center account,
 the bundle hosted on a public HTTPS origin with the COI headers (below), and
 passing Microsoft's automated + manual validation checklist.
 
