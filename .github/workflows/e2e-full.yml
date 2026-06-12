@@ -58,7 +58,9 @@ jobs:
       - name: Vendor pyspark-client wheel (same-origin)
         run: |
           set -euxo pipefail
-          pip download "pyspark-client==${PYSPARK_CLIENT_VERSION}" --no-deps -d public/
+          # pyspark-client is sdist-only on PyPI -> build the (pure) wheel.
+          pip wheel "pyspark-client==${PYSPARK_CLIENT_VERSION}" --no-deps -w public/
+          rm -f public/*.tar.gz
           ls public/pyspark_client-*.whl
 
       - name: Build dist (with vendored assets)
