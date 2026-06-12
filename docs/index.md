@@ -22,7 +22,7 @@ cluster, land the result in a worksheet range, refresh it, and chart it - with
 
 - [Installation & sideload](installation.md) - load it into Excel (web or desktop).
 - [Usage](usage.md) - connect, query, refresh, chart.
-- [Distribution](distribution.md) - host it / share it / AppSource.
+- [Distribution](distribution.md) - host it and share it.
 
 ## Under the hood
 

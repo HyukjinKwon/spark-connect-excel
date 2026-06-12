@@ -15,9 +15,8 @@ cluster, lands the result directly in a worksheet range, refreshes it, and
 charts it - with **no backend server of its own**. The query client runs
 entirely in-browser via
 [pyspark-connect-web](https://github.com/HyukjinKwon/pyspark-client-wasm)
-(real PySpark, in Pyodide).
-
-Full [documentation](https://hyukjinkwon.github.io/spark-connect-excel/).
+(real PySpark, in Pyodide). See the
+[full documentation](https://hyukjinkwon.github.io/spark-connect-excel/).
 
 ## Features
 

@@ -2,10 +2,21 @@
 
 :root {
   --orange: #e25a1c;
+  --blue: #2272b4;
+  --blue-hover: #1a5e96;
   --ink: #1f2328;
   --muted: #57606a;
-  --line: #d8dde2;
+  --line: #d0d7de;
+  --line-subtle: #e8ecf0;
   --bg: #f6f8fa;
+  --bg-card: #ffffff;
+  --shadow-card: 0 1px 3px rgba(31, 35, 40, 0.08), 0 0 0 1px var(--line);
+
+  /* Syntax highlighting palette (light background). */
+  --tok-keyword: #0969da;
+  --tok-string: #116329;
+  --tok-comment: #8a929b;
+  --tok-number: #0a7371;
 }
 
 * {
@@ -25,6 +36,8 @@ body {
   padding: 24px 20px 64px;
 }
 
+/* ---- Header ---- */
+
 .demo-header {
   display: flex;
   align-items: center;
@@ -41,6 +54,7 @@ body {
   color: #fff;
   border-radius: 6px;
   font-weight: 800;
+  font-size: 15px;
 }
 
 .demo-header__title {
@@ -51,87 +65,200 @@ body {
 .demo-sub {
   color: var(--muted);
   margin: 0 0 20px;
-  font-size: 14px;
+  font-size: 13.5px;
+  line-height: 1.5;
 }
 
+/* ---- Cards ---- */
+
 .demo-card {
-  background: #fff;
-  border: 1px solid var(--line);
+  background: var(--bg-card);
   border-radius: 8px;
-  padding: 16px;
-  margin-bottom: 16px;
+  box-shadow: var(--shadow-card);
+  padding: 14px 16px;
+  margin-bottom: 14px;
 }
 
 .demo-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 8px;
   align-items: flex-end;
 }
 
 .demo-field {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
 }
 
 .demo-field label {
-  font-size: 12px;
-  color: var(--muted);
-}
-
-.demo-field input,
-.demo-textarea {
-  font: inherit;
-  padding: 8px 10px;
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  background: #fff;
-}
-
-.demo-textarea {
-  width: 100%;
-  min-height: 110px;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 13px;
-  margin-top: 8px;
-}
-
-button {
-  font: inherit;
+  font-size: 11.5px;
   font-weight: 600;
-  border: none;
-  border-radius: 6px;
-  padding: 9px 16px;
+  color: var(--muted);
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+}
+
+/* ---- Inputs ---- */
+
+.demo-field input[type="text"],
+.demo-field input[type="number"],
+.demo-field input[type="password"],
+input.demo-input-host,
+input.demo-input-port,
+input.demo-input-token,
+input.demo-input-cap {
+  font: inherit;
+  font-size: 13px;
+  padding: 5px 8px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: #fff;
+  color: var(--ink);
+  line-height: 1.4;
+}
+
+input.demo-input-host,
+.demo-field input[type="text"]:not(.demo-input-port) {
+  width: 150px;
+}
+
+input.demo-input-port {
+  width: 80px;
+}
+
+input.demo-input-token {
+  width: 170px;
+}
+
+input.demo-input-cap {
+  width: 80px;
+}
+
+/* TLS checkbox row - align with other inputs vertically */
+.demo-field--tls {
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  padding-bottom: 3px;
+}
+
+.demo-field--tls label {
+  order: 1;
+  margin-bottom: 0;
+}
+
+.demo-field--tls input[type="checkbox"] {
+  order: 2;
+  width: 15px;
+  height: 15px;
+  margin: 0;
   cursor: pointer;
 }
 
-.demo-btn-primary {
-  background: var(--orange);
-  color: #fff;
+/* ---- Buttons (base) ---- */
+
+button {
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  padding: 6px 14px;
+  cursor: pointer;
+  line-height: 1.4;
+  transition:
+    background 0.1s,
+    border-color 0.1s,
+    color 0.1s;
 }
 
-.demo-btn-primary:disabled {
+button:disabled {
   opacity: 0.5;
   cursor: default;
 }
 
+/* Connect button - neutral secondary */
 .demo-btn-secondary {
-  background: #fff;
-  border: 1px solid var(--line);
+  background: var(--bg-card);
+  border-color: var(--line);
   color: var(--ink);
 }
 
-.demo-status {
+.demo-btn-secondary:hover:not(:disabled) {
+  background: var(--bg);
+  border-color: #b0b9c2;
+}
+
+/* Run button - confident blue (primary action) */
+.demo-btn-run {
+  background: var(--blue);
+  border-color: var(--blue);
+  color: #fff;
+  padding: 6px 20px;
   font-size: 13px;
+}
+
+.demo-btn-run:hover:not(:disabled) {
+  background: var(--blue-hover);
+  border-color: var(--blue-hover);
+}
+
+/* ---- Mode toggle (segmented control) ---- */
+
+.demo-mode-toggle {
+  display: inline-flex;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+.demo-mode-toggle button {
+  border: none;
+  border-radius: 0;
+  background: transparent;
   color: var(--muted);
-  margin-top: 10px;
+  padding: 5px 12px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 0.1s,
+    color 0.1s;
+}
+
+.demo-mode-toggle button + button {
+  border-left: 1px solid var(--line);
+}
+
+.demo-mode-toggle button.is-active {
+  background: var(--bg-card);
+  color: var(--blue);
+  box-shadow: inset 0 0 0 1px var(--line-subtle);
+}
+
+.demo-mode-toggle button:hover:not(.is-active):not(:disabled) {
+  background: var(--line-subtle);
+  color: var(--ink);
+}
+
+/* ---- Status messages ---- */
+
+.demo-status {
+  font-size: 12.5px;
+  color: var(--muted);
+  margin-top: 8px;
   min-height: 18px;
+  line-height: 1.4;
 }
 
 .demo-status.is-error {
   color: #b42318;
 }
+
+/* ---- Warning banner ---- */
 
 .demo-banner {
   border: 1px solid #f0c36d;
@@ -141,14 +268,17 @@ button {
   padding: 12px 14px;
   margin-bottom: 16px;
   font-size: 13.5px;
+  line-height: 1.5;
 }
+
+/* ---- Result area ---- */
 
 .demo-result__banner {
   background: #fff7e6;
   border: 1px solid #f0c36d;
   border-radius: 6px;
-  padding: 6px 10px;
-  font-size: 12.5px;
+  padding: 5px 10px;
+  font-size: 12px;
   margin-bottom: 8px;
 }
 
@@ -158,17 +288,22 @@ button {
   margin-bottom: 6px;
 }
 
+/* ---- Results table ---- */
+
 .demo-table {
   border-collapse: collapse;
   width: 100%;
-  font-size: 13px;
-  background: #fff;
+  font-size: 12.5px;
+  background: var(--bg-card);
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
 }
 
 .demo-table th,
 .demo-table td {
-  border: 1px solid #e9edf1;
-  padding: 6px 10px;
+  border: 1px solid var(--line-subtle);
+  padding: 5px 10px;
   text-align: left;
 }
 
@@ -199,6 +334,8 @@ button {
   font-style: italic;
 }
 
+/* ---- Footer ---- */
+
 .demo-footer {
   margin-top: 24px;
   font-size: 12px;
@@ -207,4 +344,94 @@ button {
 
 .demo-footer a {
   color: var(--orange);
+  text-decoration: none;
+}
+
+.demo-footer a:hover {
+  text-decoration: underline;
+}
+
+/* ---- Syntax-highlighted code editor ---- */
+
+.code-editor {
+  position: relative;
+  margin-top: 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fff;
+  overflow: hidden;
+  /* min-height drives both layers */
+  min-height: 110px;
+}
+
+/* Shared font/spacing for both layers - must match exactly. */
+.code-editor__highlight,
+.code-editor__textarea {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  tab-size: 4;
+  white-space: pre-wrap;
+  word-break: break-all;
+  /* Identical padding/margin so text aligns perfectly. */
+  padding: 10px 12px;
+  margin: 0;
+  border: none;
+  outline: none;
+  width: 100%;
+  min-height: 110px;
+  overflow: auto;
+  resize: vertical;
+}
+
+/* Highlight layer: behind the textarea, not interactive. */
+.code-editor__highlight {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: transparent;
+  color: var(--ink);
+  /* Scroll is controlled via JS; no independent scrollbar. */
+  overflow: hidden;
+  resize: none;
+}
+
+/* Textarea: on top, transparent so highlights show through. */
+.code-editor__textarea {
+  position: relative;
+  background: transparent;
+  color: transparent;
+  caret-color: var(--ink);
+  resize: vertical;
+  display: block;
+}
+
+.code-editor__textarea:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+.code-editor:focus-within {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 2px rgba(34, 114, 180, 0.18);
+}
+
+/* ---- Token colours ---- */
+
+.tok-keyword {
+  color: var(--tok-keyword);
+  font-weight: 600;
+}
+
+.tok-string {
+  color: var(--tok-string);
+}
+
+.tok-comment {
+  color: var(--tok-comment);
+  font-style: italic;
+}
+
+.tok-number {
+  color: var(--tok-number);
 }

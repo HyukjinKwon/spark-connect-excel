@@ -15,12 +15,16 @@ import { PyodideHost } from "../runtime/pyodideHost";
 import { SparkBridgeHost } from "../bridge/sparkBridgeHost";
 import { buildRemoteUri } from "../connection/connectionStore";
 import { renderResultTable } from "./resultTable";
+import { createCodeEditor } from "./editor";
 
 type Mode = "sql" | "python";
 
 // Bind the connected session to `spark` for Python-mode snippets. The runtime
 // module is loaded into sys.modules by SparkBridgeHost.ensureReady().
 const PY_PREAMBLE = "import spark_excel_runtime as _scx\nspark = _scx._spark\n";
+
+const SQL_SAMPLE = "SELECT 1 AS id, 'hello' AS msg";
+const PY_SAMPLE = 'spark.range(10).filter("id % 2 = 0").toPandas()';
 
 const host = new PyodideHost();
 const bridge = new SparkBridgeHost(host);
@@ -74,12 +78,20 @@ function boot(): void {
   }
 
   // -- Connection card
-  const cHost = el("input", { value: "localhost", size: 16 }) as HTMLInputElement;
-  const cPort = el("input", { value: "8081", size: 6, type: "number" }) as HTMLInputElement;
+  const cHost = el("input", {
+    className: "demo-input-host",
+    value: "localhost",
+    type: "text",
+  }) as HTMLInputElement;
+  const cPort = el("input", {
+    className: "demo-input-port",
+    value: "8081",
+    type: "number",
+  }) as HTMLInputElement;
   const cTls = el("input", { type: "checkbox" }) as HTMLInputElement;
   const cToken = el("input", {
+    className: "demo-input-token",
     type: "password",
-    size: 18,
     placeholder: "(optional)",
   }) as HTMLInputElement;
   const connectBtn = el("button", {
@@ -88,15 +100,18 @@ function boot(): void {
   }) as HTMLButtonElement;
   const connStatus = el("div", { className: "demo-status" });
 
-  const field = (label: string, input: HTMLElement) =>
-    el("div", { className: "demo-field" }, [el("label", { textContent: label }), input]);
+  const field = (label: string, input: HTMLElement, extraClass?: string) => {
+    const d = el("div", { className: "demo-field" + (extraClass ? " " + extraClass : "") });
+    d.append(el("label", { textContent: label }), input);
+    return d;
+  };
 
   app.append(
     el("div", { className: "demo-card" }, [
       el("div", { className: "demo-row" }, [
         field("Host", cHost),
         field("Port", cPort),
-        field("TLS", cTls),
+        field("TLS", cTls, "demo-field--tls"),
         field("Token", cToken),
         connectBtn,
       ]),
@@ -104,55 +119,60 @@ function boot(): void {
     ]),
   );
 
-  // -- Query card (mode toggle + editor + run)
-  const sqlBtn = el("button", {
-    className: "demo-btn-secondary",
-    textContent: "SQL",
-  }) as HTMLButtonElement;
-  const pyBtn = el("button", {
-    className: "demo-btn-secondary",
-    textContent: "Python",
-  }) as HTMLButtonElement;
-  const editor = el("textarea", {
-    className: "demo-textarea",
-    value: "SELECT 1 AS id, 'hello' AS msg",
-  }) as HTMLTextAreaElement;
-  const capWrap = el("input", { type: "number", value: "1000", size: 6 }) as HTMLInputElement;
+  // -- Query card: mode toggle, max rows, run button, code editor, status
+
+  // Mode toggle (segmented control - neutral styling, not orange).
+  const sqlBtn = el("button", { textContent: "SQL" }) as HTMLButtonElement;
+  const pyBtn = el("button", { textContent: "Python" }) as HTMLButtonElement;
+  const modeToggle = el("div", { className: "demo-mode-toggle" }, [sqlBtn, pyBtn]);
+
+  // Max-rows input.
+  const capInput = el("input", {
+    className: "demo-input-cap",
+    type: "number",
+    value: "1000",
+  }) as HTMLInputElement;
+
+  // Run button - blue, clearly the primary action.
   const runBtn = el("button", {
-    className: "demo-btn-primary",
+    className: "demo-btn-run",
     textContent: "Run",
   }) as HTMLButtonElement;
+
   const runStatus = el("div", { className: "demo-status" });
   const results = el("div", {});
 
-  function setMode(next: Mode): void {
+  // Code editor (syntax-highlighted overlay).
+  const codeEditor = createCodeEditor({ value: SQL_SAMPLE, mode: "sql" });
+
+  function applyMode(next: Mode): void {
     mode = next;
-    sqlBtn.className = next === "sql" ? "demo-btn-primary" : "demo-btn-secondary";
-    pyBtn.className = next === "python" ? "demo-btn-primary" : "demo-btn-secondary";
-    editor.value =
-      next === "sql"
-        ? "SELECT 1 AS id, 'hello' AS msg"
-        : 'spark.range(10).filter("id % 2 = 0").toPandas()';
+    // Update segmented control appearance.
+    sqlBtn.className = next === "sql" ? "is-active" : "";
+    pyBtn.className = next === "python" ? "is-active" : "";
+    // Swap snippet and re-highlight.
+    codeEditor.setValue(next === "sql" ? SQL_SAMPLE : PY_SAMPLE);
+    codeEditor.setMode(next);
   }
-  sqlBtn.onclick = () => setMode("sql");
-  pyBtn.onclick = () => setMode("python");
+
+  sqlBtn.onclick = () => applyMode("sql");
+  pyBtn.onclick = () => applyMode("python");
 
   app.append(
     el("div", { className: "demo-card" }, [
       el("div", { className: "demo-row" }, [
-        el("div", { className: "demo-field" }, [
-          el("label", { textContent: "Mode" }),
-          el("div", { className: "demo-row" }, [sqlBtn, pyBtn]),
-        ]),
-        field("Max rows (SQL)", capWrap),
+        el("div", { className: "demo-field" }, [el("label", { textContent: "Mode" }), modeToggle]),
+        field("Max rows (SQL)", capInput),
         runBtn,
       ]),
-      editor,
+      codeEditor.el,
       runStatus,
     ]),
     results,
   );
-  setMode("sql");
+
+  // Initial mode render.
+  applyMode("sql");
 
   // -- Wiring
   function busy(b: boolean, statusEl: HTMLElement, msg = ""): void {
@@ -186,12 +206,12 @@ function boot(): void {
   };
 
   runBtn.onclick = async () => {
-    const src = editor.value.trim();
+    const src = codeEditor.getValue().trim();
     if (!src) return;
     busy(true, runStatus, "Running...");
     try {
       if (mode === "sql") {
-        const cap = Number(capWrap.value) || 1000;
+        const cap = Number(capInput.value) || 1000;
         const result = await bridge.runSQL(src, cap);
         results.replaceChildren(renderResultTable(result));
         runStatus.textContent = "Done.";

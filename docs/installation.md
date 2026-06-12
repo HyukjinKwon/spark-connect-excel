@@ -84,7 +84,7 @@ npm run build       # tsc --noEmit + vite build
 
 ## Sideload into Excel
 
-Sideloading installs the add-in without publishing it to AppSource.
+Sideloading installs the add-in directly, without an add-in store.
 
 ### Excel on the web - recommended (fewest steps, no admin)
 
