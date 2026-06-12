@@ -9,12 +9,6 @@
 
 **Power Query, but the engine is your Spark cluster.**
 
-<p align="center">
-  <img src="docs/screenshots/web-demo.png" alt="The web demo: connect, run Spark SQL or PySpark, results as a typed table." width="820" />
-  <br/>
-  <em>The web demo: a Spark SQL query and its result.</em>
-</p>
-
 An Excel add-in that runs a Spark SQL query against your own
 [Spark Connect](https://spark.apache.org/docs/latest/spark-connect-overview.html)
 cluster, lands the result directly in a worksheet range, refreshes it, and
