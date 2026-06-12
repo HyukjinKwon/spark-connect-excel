@@ -42,7 +42,7 @@ entirely in-browser via
 
 - Node 20, plus `python3` + `pip`, `git`, `curl`, `tar` (the quickstart vendors
   Pyodide + the wheels the in-browser engine needs - it does this for you).
-- A Chromium-based Excel host: Excel on Windows / Microsoft 365, or Excel on the web in Edge or Chrome.
+- Excel **desktop** (Microsoft 365 / 2019, Windows or Mac) to run the engine. Excel on the web loads the task pane but cannot run the engine (see Compatibility). The standalone web demo runs in any Chromium browser.
 - A running Spark Connect server (see below).
 
 ### Start a Spark Connect server
@@ -77,35 +77,36 @@ Open `https://localhost:3000/demo/demo.html`, point it at your Spark Connect
 server, and run a query. See the
 [usage guide](https://hyukjinkwon.github.io/spark-connect-excel/usage/).
 
-### Try with Excel on the web (sideload)
+### Try with Excel on Windows / Mac desktop (sideloads) - runs the engine
 
-With a Spark Connect server running, start the add-in:
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/HyukjinKwon/spark-connect-excel/main/scripts/quickstart.sh | bash
-```
-
-Then in Excel on the web (Edge/Chrome): **Home -> Add-ins -> MY ADD-INS ->
-"Choose your add-in manifest"** -> pick `manifest.xml`. (The Add-ins button is on
-the **Home** tab in current Excel on the web; older builds put it under
-**Insert**.) The **Spark SQL** button then appears on the Home ribbon.
-
-### Try with Excel on Windows / Mac desktop (sideloads)
-
-With a Spark Connect server running:
+Excel **desktop** is the host that runs the engine. With a Spark Connect server
+running:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/HyukjinKwon/spark-connect-excel/main/scripts/quickstart.sh | bash -s -- desktop
 ```
 
-This serves the add-in and opens Excel with it sideloaded. Full guides are on the
+This serves the add-in and opens Excel with it sideloaded. The **Apache Spark**
+button (group **Spark Connect**) appears on the Home ribbon.
+
+### Excel on the web - task pane only (engine does not run)
+
+You can sideload the add-in on Excel on the web (**Home -> Add-ins -> MY ADD-INS
+-> "Choose your add-in manifest"** -> `manifest.xml`) and the task pane loads,
+but **the engine will not start there**: it needs `SharedArrayBuffer`, which
+requires a cross-origin-isolated dialog window that Excel on the web does not
+permit (you get a "security zone" error). Use Excel **desktop** for the engine,
+or run the standalone **web demo** above, which works in any Chromium browser.
+(This is the same in Chrome and Edge - it is a platform limit, not a browser
+setting.) Full guides are on the
 [documentation site](https://hyukjinkwon.github.io/spark-connect-excel/).
 
 ## Compatibility
 
 | Component | Supported |
 |-----------|-----------|
-| Excel | 2019 / Microsoft 365 - Windows, Mac, Excel on the web |
+| Excel (engine) | Microsoft 365 / 2019 desktop - Windows or Mac |
+| Excel on the web | task pane UI only; engine needs desktop (no cross-origin-isolated dialog) |
 | Excel API requirement | ExcelApi 1.12, DialogApi 1.2 |
 | Spark | 4.x (Spark Connect; `apache/spark:4.0.0` in the deploy stack) |
 | PySpark | `>=4.0,<4.2` (enforced by `pcw.install()`) |
