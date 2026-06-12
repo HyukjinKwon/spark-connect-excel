@@ -11,6 +11,10 @@ cluster, land the result in a worksheet range, refresh it, and chart it - with
 [pyspark-connect-web](https://github.com/HyukjinKwon/pyspark-client-wasm)
 (real PySpark, in Pyodide).
 
+<p align="center">
+  <img src="screenshots/web-demo.png" alt="The Spark Connect web demo: connection form and a SQL editor with syntax highlighting." width="760" />
+</p>
+
 ## Highlights
 
 - **SQL in Excel** - results land as typed cells; Spark's schema drives number formats.

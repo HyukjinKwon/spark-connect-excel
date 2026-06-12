@@ -18,6 +18,12 @@ entirely in-browser via
 (real PySpark, in Pyodide). See the
 [full documentation](https://hyukjinkwon.github.io/spark-connect-excel/).
 
+<p align="center">
+  <img src="docs/screenshots/web-demo.png" alt="The Spark Connect web demo: connection form and a SQL editor with syntax highlighting." width="820" />
+  <br/>
+  <em>The web demo - Spark SQL with syntax highlighting.</em>
+</p>
+
 ## Features
 
 - **SQL in Excel** - write Spark SQL in the task pane; results land as typed cells.

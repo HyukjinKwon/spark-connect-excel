@@ -1,0 +1,95 @@
+# SPDX-License-Identifier: Apache-2.0
+name: e2e-full
+
+# The COMPLETE browser-to-Spark end-to-end gate: vendors Pyodide + the wheels,
+# brings up the real Spark Connect + Envoy + static stack via docker compose,
+# and drives the web demo in headless Chromium through a live Spark SQL query.
+# Heavier and slower than ci.yml / e2e.yml; separate workflow.
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+concurrency:
+  group: e2e-full-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  full:
+    name: full browser e2e (Pyodide + grpc-web + Spark)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      E2E_FULL: "1"
+      E2E_DEMO_URL: http://localhost:8000/demo/demo.html
+      PYODIDE_VERSION: "0.28.0"
+      PYSPARK_CLIENT_VERSION: "4.1.2"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      - name: Vendor pcw glue + wheel (same-origin)
+        run: npm run vendor:runtime
+
+      - name: Vendor Pyodide (same-origin)
+        run: |
+          set -euxo pipefail
+          curl -fsSL "https://github.com/pyodide/pyodide/releases/download/${PYODIDE_VERSION}/pyodide-${PYODIDE_VERSION}.tar.bz2" -o /tmp/pyodide.tar.bz2
+          mkdir -p public/pyodide
+          tar xjf /tmp/pyodide.tar.bz2 -C /tmp
+          cp -r /tmp/pyodide/* public/pyodide/
+          test -f public/pyodide/pyodide.mjs
+
+      - name: Vendor pyspark-client wheel (same-origin)
+        run: |
+          set -euxo pipefail
+          pip download "pyspark-client==${PYSPARK_CLIENT_VERSION}" --no-deps -d public/
+          ls public/pyspark_client-*.whl
+
+      - name: Build dist (with vendored assets)
+        run: npm run build
+
+      - name: Bring up Spark + Envoy + static stack
+        run: docker compose -f deploy/compose.yaml up -d --wait
+
+      - name: Stack health
+        run: |
+          set -uxo pipefail
+          curl -sS -I http://localhost:8000/demo/demo.html | head -20
+          curl -sS -o /dev/null -w "envoy-ready:%{http_code}\n" http://localhost:9901/ready || true
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run full-stack e2e
+        run: npx playwright test --config tests/e2e/playwright.full.config.ts
+
+      - name: Upload Playwright report + live screenshot
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-full-report
+          path: playwright-report
+
+      - name: Stack logs (debug)
+        if: always()
+        run: docker compose -f deploy/compose.yaml logs --no-color | tail -400
+
+      - name: Tear down
+        if: always()
+        run: docker compose -f deploy/compose.yaml down -v

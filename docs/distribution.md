@@ -2,20 +2,25 @@
 
 # Distribution
 
-This page is about getting **this add-in** to your own users - hosting the
-static bundle and sideloading it. It is not a template or guide for publishing
-other packages.
+## Two distribution paths
 
-## How it's distributed
+### 1. Sideload (developer / self-hosted / private team)
 
-The add-in is distributed by **sideloading** - installing it directly from a
-manifest, no add-in store involved. It is the path for:
+Sideloading installs the add-in directly from a manifest, no add-in store
+involved. It is the path for:
 
 - Development and testing
 - Private team deployments
 - IT-managed enterprise rollouts via Centralized Deployment (below)
 
 See [installation.md](installation.md) for step-by-step instructions.
+
+### 2. AppSource (public distribution)
+
+AppSource submission makes the add-in available to any Microsoft 365 user via
+**Insert > Get Add-ins**. This path requires a Microsoft Partner Center account,
+the bundle hosted on a public HTTPS origin with the COI headers (below), and
+passing Microsoft's automated + manual validation checklist.
 
 ---
 

@@ -1,0 +1,59 @@
+// SPDX-License-Identifier: Apache-2.0
+//
+// full-stack.spec.ts - the COMPLETE browser-to-Spark e2e.
+//
+// Drives the real web demo in headless Chromium: boots Pyodide +
+// pyspark-connect-web, connects through the Envoy grpc-web proxy to a real
+// Spark Connect server, runs a Spark SQL query, and asserts the rendered
+// result. This exercises the entire stack that the COI gate and the Python
+// integration test each cover only part of.
+//
+// Runs only when E2E_FULL=1 (the deploy stack must be up + dist vendored with
+// Pyodide and the wheels). The e2e-full.yml workflow sets that up.
+
+import { test, expect } from "@playwright/test";
+
+const FULL = process.env.E2E_FULL === "1";
+const DEMO_URL = process.env.E2E_DEMO_URL || "http://localhost:8000/demo/demo.html";
+
+test.describe("full-stack: Pyodide + grpc-web + Spark Connect", () => {
+  test.skip(!FULL, "set E2E_FULL=1 with the deploy stack up + assets vendored");
+
+  test("connect and run a Spark SQL query, end to end", async ({ page }) => {
+    test.setTimeout(360_000); // Pyodide cold boot + wheel install is slow
+
+    const errors: string[] = [];
+    page.on("console", (m) => {
+      if (m.type() === "error") errors.push(m.text());
+    });
+
+    await page.goto(DEMO_URL);
+
+    // Served with COOP/COEP -> cross-origin isolated (prereq for SharedArrayBuffer).
+    await expect
+      .poll(() => page.evaluate(() => self.crossOriginIsolated), { timeout: 20_000 })
+      .toBe(true);
+
+    // Connection form -> Envoy grpc-web endpoint.
+    await page.fill("input.demo-input-host", "localhost");
+    await page.fill("input.demo-input-port", "8081");
+    await page.getByRole("button", { name: "Connect" }).click();
+
+    // Booting Pyodide + installing wheels + connecting is slow on a cold runner.
+    await expect(page.getByText(/Connected/)).toBeVisible({ timeout: 300_000 });
+
+    // Run a Spark SQL query through the real engine.
+    await page.locator(".code-editor__textarea").fill("SELECT 1 AS id, 'hello' AS msg");
+    await page.getByRole("button", { name: "Run" }).click();
+
+    // Result table rendered from real Spark output.
+    const table = page.locator("table.demo-table");
+    await expect(table).toBeVisible({ timeout: 60_000 });
+    await expect(table.locator("thead th").nth(0)).toContainText("id");
+    await expect(table.locator("thead th").nth(1)).toContainText("msg");
+    await expect(table.locator("tbody tr").nth(0).locator("td").nth(1)).toContainText("hello");
+
+    // Capture a genuine screenshot of the running demo (uploaded as an artifact).
+    await page.screenshot({ path: "playwright-report/web-demo-live.png", fullPage: true });
+  });
+});
