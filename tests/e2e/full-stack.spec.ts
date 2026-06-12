@@ -22,10 +22,11 @@ test.describe("full-stack: Pyodide + grpc-web + Spark Connect", () => {
   test("connect and run a Spark SQL query, end to end", async ({ page }) => {
     test.setTimeout(360_000); // Pyodide cold boot + wheel install is slow
 
-    const errors: string[] = [];
-    page.on("console", (m) => {
-      if (m.type() === "error") errors.push(m.text());
-    });
+    // Capture the full browser console + page errors so a failure shows WHY
+    // (Pyodide boot / wheel install / grpc-web errors land here).
+    const log: string[] = [];
+    page.on("console", (m) => log.push(`[${m.type()}] ${m.text()}`));
+    page.on("pageerror", (e) => log.push(`[pageerror] ${e.message}`));
 
     await page.goto(DEMO_URL);
 
@@ -40,7 +41,16 @@ test.describe("full-stack: Pyodide + grpc-web + Spark Connect", () => {
     await page.getByRole("button", { name: "Connect" }).click();
 
     // Booting Pyodide + installing wheels + connecting is slow on a cold runner.
-    await expect(page.getByText(/Connected/)).toBeVisible({ timeout: 300_000 });
+    const connStatus = page.locator(".demo-status").first();
+    try {
+      await expect(connStatus).toContainText("Connected", { timeout: 300_000 });
+    } catch (e) {
+      const txt = await connStatus.textContent().catch(() => "(no status)");
+      console.log("=== CONNECT did not complete. Last status:", txt);
+      console.log("=== Browser log:\n" + log.join("\n"));
+      await page.screenshot({ path: "playwright-report/connect-failed.png", fullPage: true });
+      throw e;
+    }
 
     // Run a Spark SQL query through the real engine.
     await page.locator(".code-editor__textarea").fill("SELECT 1 AS id, 'hello' AS msg");
