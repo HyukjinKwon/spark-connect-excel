@@ -61,9 +61,8 @@ The dev server uses plain HTTP by default. Windows WebView2 and Mac WKWebView
 require HTTPS for the task pane. To enable HTTPS in dev:
 
 ```bash
-npx office-addin-dev-certs install
-# Then start the dev server with HTTPS enabled
-npm run dev
+npx office-addin-dev-certs install   # once — installs an OS-trusted local cert
+npm run dev:https                    # serves https://localhost:3000 (COI headers + TLS)
 ```
 
 ## Testing with ngrok (Excel on the web / remote team)

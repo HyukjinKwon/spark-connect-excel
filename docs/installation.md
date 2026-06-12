@@ -53,13 +53,13 @@ Office add-ins on Windows (WebView2) and Mac (WKWebView) require HTTPS for the
 task pane. Use `office-addin-dev-certs` to generate a local certificate:
 
 ```bash
-npx office-addin-dev-certs install
-npm run dev
-# or if a dev:https script is added to package.json:
-# HTTPS=true npm run dev
+npx office-addin-dev-certs install   # once — installs an OS-trusted local cert
+npm run dev:https                    # serves https://localhost:3000 with COI headers
 ```
 
-The dev cert is trusted by the OS so WebView2/WKWebView accept it.
+`npm run dev:https` sets `HTTPS=true`, which makes Vite load the trusted cert
+from `office-addin-dev-certs`. The cert is trusted by the OS so WebView2/WKWebView
+accept it. (Plain `npm run dev` stays HTTP — used for unit tests / the COI gate.)
 
 ---
 

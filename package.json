@@ -11,6 +11,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:https": "HTTPS=true vite",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
@@ -31,6 +32,7 @@
     "@vitest/coverage-v8": "^2.0.5",
     "eslint": "^9.9.0",
     "jsdom": "^24.1.1",
+    "office-addin-dev-certs": "^2.0.9",
     "office-addin-manifest": "^1.13.4",
     "prettier": "^3.3.3",
     "typescript": "^5.5.4",
