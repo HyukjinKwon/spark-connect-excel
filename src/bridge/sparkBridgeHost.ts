@@ -67,7 +67,11 @@ function callPy(fn: string, ...args: unknown[]): string {
     `import json as __json, base64 as __b64`,
     `__pcw_args = __json.loads(__b64.b64decode(${JSON.stringify(argsB64)}).decode())`,
     `__pcw_out = ${fn}(*__pcw_args)`,
-    `print(${mark} + (__pcw_out if isinstance(__pcw_out, str) else __json.dumps(__pcw_out)) + ${mark}, end="")`,
+    // A trailing newline is REQUIRED: the worker captures stdout via Pyodide's
+    // setStdout({batched}), which only flushes the buffer on a newline. Without
+    // it the printed payload never reaches the host (raw stays empty). The
+    // newline lands outside the closing marker, so extractPayload is unaffected.
+    `print(${mark} + (__pcw_out if isinstance(__pcw_out, str) else __json.dumps(__pcw_out)) + ${mark})`,
   ].join("\n");
 }
 
