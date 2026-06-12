@@ -10,7 +10,7 @@
 // it requires a live Office host; it is exercised by Lane J's e2e tests.
 
 import { describe, it, expect } from "vitest";
-import { inferChartType } from "../../src/excel/chart.js";
+import { inferChartType, rightOfData } from "../../src/excel/chart.js";
 import type { ChartKind } from "../../src/excel/chart.js";
 import type { ColumnMeta } from "../../src/seam.js";
 
@@ -21,6 +21,37 @@ import type { ColumnMeta } from "../../src/seam.js";
 function col(name: string, type: string): ColumnMeta {
   return { name, type };
 }
+
+// ---------------------------------------------------------------------------
+// rightOfData — sheet-qualified address handling (S-1 fix)
+// ---------------------------------------------------------------------------
+
+describe("rightOfData — chart anchor placement", () => {
+  it("bare address A1:C10 with colCount=3 → D1", () => {
+    expect(rightOfData("A1:C10", 3)).toBe("D1");
+  });
+
+  it("sheet-qualified Sheet1!A1:C10 with colCount=3 → D1 (not J1)", () => {
+    // Before the fix this would return "J1" because the regex failed on "Sheet1!A1"
+    expect(rightOfData("Sheet1!A1:C10", 3)).toBe("D1");
+  });
+
+  it("sheet-qualified with spaces 'My Sheet'!B2:E10 with colCount=4 → F2", () => {
+    expect(rightOfData("'My Sheet'!B2:E10", 4)).toBe("F2");
+  });
+
+  it("single-cell address A1 with colCount=1 → B1", () => {
+    expect(rightOfData("A1", 1)).toBe("B1");
+  });
+
+  it("large column Z1 with colCount=1 → AA1", () => {
+    expect(rightOfData("Z1", 1)).toBe("AA1");
+  });
+
+  it("returns J1 fallback for an unparseable address", () => {
+    expect(rightOfData("!!!", 1)).toBe("J1");
+  });
+});
 
 // ---------------------------------------------------------------------------
 // Rule 1: temporal + ≥1 numeric → "line"

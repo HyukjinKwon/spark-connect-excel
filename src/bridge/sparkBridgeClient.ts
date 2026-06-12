@@ -148,8 +148,9 @@ export class SparkBridgeClient implements SparkBridge {
 
     if (msg.kind === "evt") {
       const evt = msg as BridgeEvent;
-      if (evt.event === "status" && evt.payload) {
+      if ((evt.event === "status" || evt.event === "ready") && evt.payload) {
         // Merge the status update into our cached status.
+        // "ready" payload is a RuntimeStatus; "status" payload is Partial<RuntimeStatus>.
         const update = evt.payload as Partial<RuntimeStatus>;
         this._status = { ...this._status, ...update };
       }

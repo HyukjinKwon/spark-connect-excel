@@ -29,6 +29,7 @@ from __future__ import annotations
 
 import json
 import math
+import re
 import traceback
 from typing import Any
 
@@ -165,16 +166,32 @@ def _result_to_dict(df: Any, pdf: Any, row_cap: int) -> dict:
 
 
 # ---------------------------------------------------------------------------
+# Token redaction helper
+# ---------------------------------------------------------------------------
+
+_TOKEN_RE = re.compile(r";token=[^;&#\s]+", re.IGNORECASE)
+
+
+def _redact(text: str) -> str:
+    """Replace any ';token=<value>' occurrence with ';token=***'.
+
+    Prevents bearer tokens embedded in Spark Connect URIs from leaking into
+    error messages returned to the browser.
+    """
+    return _TOKEN_RE.sub(";token=***", text)
+
+
+# ---------------------------------------------------------------------------
 # Error helper
 # ---------------------------------------------------------------------------
 
 def _error_json(exc: BaseException) -> str:
-    """Return a JSON error envelope string."""
+    """Return a JSON error envelope string with token values redacted."""
     return json.dumps({
         "ok": False,
         "error": {
             "name": type(exc).__name__,
-            "message": str(exc),
+            "message": _redact(str(exc)),
         },
     })
 

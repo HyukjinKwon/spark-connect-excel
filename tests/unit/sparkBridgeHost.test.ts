@@ -103,6 +103,63 @@ describe("SparkBridgeHost — connect", () => {
     await expect(bridge.connect("sc://bad:1/;transport=grpcweb")).rejects.toThrow("UNAVAILABLE");
     expect(bridge.status().connected).toBe(false);
   });
+
+  it("S-3: skips Python connect() when called again with identical args", async () => {
+    const host = new FakeRuntimeHost();
+    const bridge = new SparkBridgeHost(host);
+    const uri = "sc://localhost:8081/;transport=grpcweb";
+    await bridge.connect(uri, { token: "tok" });
+    const callsAfterFirst = host.runCalls.filter((c) => c.includes("connect(")).length;
+    // Call again with same args — should be a no-op
+    await bridge.connect(uri, { token: "tok" });
+    const callsAfterSecond = host.runCalls.filter((c) => c.includes("connect(")).length;
+    expect(callsAfterSecond).toBe(callsAfterFirst);
+  });
+
+  it("S-3: re-runs Python connect() when called with different uri", async () => {
+    const host = new FakeRuntimeHost();
+    const bridge = new SparkBridgeHost(host);
+    await bridge.connect("sc://host-a:8081/", { token: "tok" });
+    const callsBefore = host.runCalls.filter((c) => c.includes("connect(")).length;
+    await bridge.connect("sc://host-b:8081/", { token: "tok" });
+    const callsAfter = host.runCalls.filter((c) => c.includes("connect(")).length;
+    expect(callsAfter).toBe(callsBefore + 1);
+  });
+
+  it("S-3: cancel() clears memo so next connect() actually reconnects", async () => {
+    const host = new FakeRuntimeHost();
+    const bridge = new SparkBridgeHost(host);
+    const uri = "sc://localhost:8081/;transport=grpcweb";
+    await bridge.connect(uri, { token: "tok" });
+    const callsAfterFirst = host.runCalls.filter((c) => c.includes("connect(")).length;
+    bridge.cancel();
+    // After cancel the memo is cleared; same args should re-run connect
+    await bridge.connect(uri, { token: "tok" });
+    const callsAfterReconnect = host.runCalls.filter((c) => c.includes("connect(")).length;
+    expect(callsAfterReconnect).toBe(callsAfterFirst + 1);
+  });
+});
+
+describe("SparkBridgeHost — ensureReady retry after failure (B-4)", () => {
+  it("resets _bootPromise on failure so a later call can retry", async () => {
+    let failCount = 0;
+    const host = new FakeRuntimeHost();
+    // Make the first boot() call fail
+    host.boot = async () => {
+      failCount++;
+      if (failCount === 1) {
+        throw new Error("boot failed");
+      }
+      host.ready = true;
+    };
+
+    const bridge = new SparkBridgeHost(host);
+    await expect(bridge.ensureReady()).rejects.toThrow("boot failed");
+
+    // After the failure the bridge should allow a retry
+    await bridge.ensureReady();
+    expect(bridge.status().pyodideReady).toBe(true);
+  });
 });
 
 describe("SparkBridgeHost — runSQL / schemaOf", () => {
@@ -139,12 +196,17 @@ describe("SparkBridgeHost — runSQL / schemaOf", () => {
     expect(schema).toEqual(SAMPLE_RESULT.schema);
   });
 
-  it("passes the row cap through to the run_sql snippet", async () => {
+  it("passes the row cap through to the run_sql snippet (b64-encoded)", async () => {
     const host = new FakeRuntimeHost();
     const bridge = new SparkBridgeHost(host);
     await bridge.runSQL("SELECT 1", 4242);
     const runSqlCall = host.runCalls.find((c) => c.includes("run_sql("));
     expect(runSqlCall).toBeDefined();
-    expect(runSqlCall).toContain("4242");
+    // Args are base64-encoded; decode the b64 literal from the snippet and
+    // verify that the row cap value is present in the decoded JSON payload.
+    const b64Match = /b64decode\("([^"]+)"\)/.exec(runSqlCall!);
+    expect(b64Match).not.toBeNull();
+    const decoded = atob(b64Match![1]);
+    expect(decoded).toContain("4242");
   });
 });

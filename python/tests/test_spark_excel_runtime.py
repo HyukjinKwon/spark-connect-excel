@@ -310,6 +310,81 @@ class TestResultToDict:
 
 
 # ---------------------------------------------------------------------------
+# Token redaction tests
+# ---------------------------------------------------------------------------
+
+class TestTokenRedaction:
+    """Verify that bearer tokens never appear in error envelopes."""
+
+    def test_redact_removes_token_value(self) -> None:
+        result = _srt._redact("sc://host:443/;transport=grpcweb;token=supersecret123")
+        assert "supersecret123" not in result
+        assert ";token=***" in result
+
+    def test_redact_leaves_text_without_token_unchanged(self) -> None:
+        text = "some error without token info"
+        assert _srt._redact(text) == text
+
+    def test_redact_case_insensitive(self) -> None:
+        result = _srt._redact("sc://host/;TOKEN=MySecret")
+        assert "MySecret" not in result
+        assert ";token=***" in result.lower()
+
+    def test_error_json_does_not_leak_token(self) -> None:
+        """A connect URI with a token embedded must not appear in the error JSON."""
+        token_value = "very_secret_bearer_token_abc123"
+        exc = RuntimeError(
+            f"Connection failed: sc://host:443/;transport=grpcweb;token={token_value}"
+        )
+        s = _srt._error_json(exc)
+        parsed = json.loads(s)
+        assert parsed["ok"] is False
+        # The raw token value must not appear anywhere in the JSON string
+        assert token_value not in s
+        # The error name and a redacted message should still be present
+        assert parsed["error"]["name"] == "RuntimeError"
+        assert ";token=***" in parsed["error"]["message"]
+
+    def test_connect_error_does_not_leak_token(self) -> None:
+        """Simulate a connect() failure and verify the token is redacted."""
+        import sys
+        import types
+
+        # Build a minimal fake pyspark_connect_web stub that raises on getOrCreate
+        pcw_stub = types.ModuleType("pyspark_connect_web")
+        pcw_stub.install = lambda: None  # type: ignore[attr-defined]
+        sys.modules.setdefault("pyspark_connect_web", pcw_stub)
+
+        class _FakeBuilder:
+            def remote(self, _uri: str) -> "_FakeBuilder":
+                return self
+            def getOrCreate(self) -> None:
+                raise RuntimeError(
+                    "UNAVAILABLE: no route to host sc://bad:443/;token=leaked_token_xyz"
+                )
+
+        class _FakeSession:
+            builder = _FakeBuilder()
+
+        pyspark_stub = types.ModuleType("pyspark")
+        pyspark_sql_stub = types.ModuleType("pyspark.sql")
+        pyspark_sql_stub.SparkSession = _FakeSession  # type: ignore[attr-defined]
+        sys.modules["pyspark"] = pyspark_stub
+        sys.modules["pyspark.sql"] = pyspark_sql_stub
+
+        orig_spark = _srt._spark
+        try:
+            result_str = _srt.connect("sc://bad:443/;transport=grpcweb", "leaked_token_xyz")
+            parsed = json.loads(result_str)
+            assert parsed["ok"] is False
+            assert "leaked_token_xyz" not in result_str
+        finally:
+            _srt._spark = orig_spark
+            sys.modules.pop("pyspark", None)
+            sys.modules.pop("pyspark.sql", None)
+
+
+# ---------------------------------------------------------------------------
 # Error JSON shape tests
 # ---------------------------------------------------------------------------
 

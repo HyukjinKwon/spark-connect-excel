@@ -283,9 +283,13 @@ function deriveTitle(schema: ColumnMeta[]): string {
  * column names (A–Z) and double-letter names (AA–ZZ) which covers the
  * practical range for Spark result sets within the 10k-row cap.
  */
-function rightOfData(dataRangeAddress: string, colCount: number): string {
-  // Extract the top-left cell of the range (e.g. "A1" from "A1:C10")
-  const topLeft = dataRangeAddress.split(":")[0];
+/** @internal Exported for unit testing only. */
+export function rightOfData(dataRangeAddress: string, colCount: number): string {
+  // Extract the top-left cell of the range (e.g. "A1" from "A1:C10" or
+  // "Sheet1!A1:C10"). Strip any sheet prefix (everything up to and including
+  // the last "!") so the regex works on the bare cell address.
+  const topLeftFull = dataRangeAddress.split(":")[0];
+  const topLeft = topLeftFull.split("!").pop() ?? topLeftFull;
   // Split into column letters and row digits
   const match = /^([A-Z]+)(\d+)$/.exec(topLeft);
   if (!match) {

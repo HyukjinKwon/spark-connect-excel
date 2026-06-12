@@ -95,6 +95,11 @@ export async function writeResult(
       anchorCell = ctx.workbook.getSelectedRange();
     }
 
+    // Normalize the anchor to its single top-left cell so that getResizedRange
+    // and getOffsetRange always work from a 1x1 base, even on refresh when the
+    // anchor address may be a multi-cell range (e.g. "Sheet1!A1:D1").
+    anchorCell = anchorCell.getCell(0, 0);
+
     // Load anchor address so we can check whether we have room above.
     anchorCell.load("address,rowIndex");
     await ctx.sync();

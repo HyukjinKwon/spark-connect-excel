@@ -56,9 +56,10 @@ export function numberFormatFor(sparkType: string): string | null {
     return "0.00";
   }
 
-  // Decimal: extract scale and produce an appropriate format.
-  // e.g. "decimal(10,2)" → "0.00", "decimal(18,0)" → "0", "decimal" → "0.00"
-  const decimalMatch = t.match(/^decimal(?:\((\d+),\s*(\d+)\))?$/);
+  // Decimal / Numeric: extract scale and produce an appropriate format.
+  // "numeric" is Spark's alias for DECIMAL (ANSI SQL synonym).
+  // e.g. "decimal(10,2)" → "0.00", "numeric(18,0)" → "0", "decimal" → "0.00"
+  const decimalMatch = t.match(/^(?:decimal|numeric)(?:\((\d+),\s*(\d+)\))?$/);
   if (decimalMatch) {
     const scale = decimalMatch[2] !== undefined ? parseInt(decimalMatch[2], 10) : 2;
     if (scale === 0) {

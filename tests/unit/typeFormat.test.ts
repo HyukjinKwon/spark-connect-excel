@@ -73,6 +73,28 @@ describe("numberFormatFor", () => {
     });
   });
 
+  describe("numeric types (ANSI alias for decimal)", () => {
+    it("maps numeric → 0.00 (bare, default scale 2)", () => {
+      expect(numberFormatFor("numeric")).toBe("0.00");
+    });
+
+    it("maps numeric(10,2) → 0.00", () => {
+      expect(numberFormatFor("numeric(10,2)")).toBe("0.00");
+    });
+
+    it("maps numeric(18,0) → 0 (integer scale)", () => {
+      expect(numberFormatFor("numeric(18,0)")).toBe("0");
+    });
+
+    it("maps numeric(38,6) → 0.000000", () => {
+      expect(numberFormatFor("numeric(38,6)")).toBe("0.000000");
+    });
+
+    it("maps NUMERIC(10,2) case-insensitively", () => {
+      expect(numberFormatFor("NUMERIC(10,2)")).toBe("0.00");
+    });
+  });
+
   describe("date / timestamp types", () => {
     it("maps date → yyyy-mm-dd", () => {
       expect(numberFormatFor("date")).toBe("yyyy-mm-dd");

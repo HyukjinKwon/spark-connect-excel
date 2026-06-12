@@ -24,25 +24,38 @@ import runtimeSource from "../../python/spark_excel_runtime.py?raw";
 // ---------------------------------------------------------------------------
 
 /**
- * Build a Python snippet that safely passes `args` (as a JSON literal) into a
- * module-level function call:
+ * Convert a UTF-8 string to a base64-encoded string without using the
+ * deprecated `unescape(encodeURIComponent(...))` idiom.
  *
- *   __pcw_args = json.loads(r'''<json>''')
+ * Uses TextEncoder (available in all modern browsers and Node 16+) to get the
+ * UTF-8 byte array, then maps each byte to its char and calls btoa().
+ */
+function utf8ToBase64(str: string): string {
+  const bytes = new TextEncoder().encode(str);
+  let binary = "";
+  for (let i = 0; i < bytes.length; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary);
+}
+
+/**
+ * Build a Python snippet that safely passes `args` into a module-level
+ * function call via base64-encoded JSON.
+ *
+ *   __pcw_args = __json.loads(__b64.b64decode("<b64>").decode())
  *   <fn>(*__pcw_args)
  *
- * Using a raw triple-quoted string avoids any Python string-escaping issues
- * with the SQL text.  The result of the last expression is what runPython
- * returns (the JSON string produced by the function).
+ * Base64-encoding the JSON payload completely eliminates any risk of the
+ * argument content (e.g. SQL with triple-quotes or backslashes) breaking
+ * Python string parsing.
  */
 function callPy(fn: string, ...args: unknown[]): string {
-  // Encode args as JSON.  Triple-single-quote is safe here because JSON never
-  // produces a lone single-quote followed by two more; but to be extra safe we
-  // pick triple-single-quote and ensure the JSON doesn't contain the delimiter.
-  // JSON never contains `'''` so this is always safe.
   const argsJson = JSON.stringify(args);
+  const argsB64 = utf8ToBase64(argsJson);
   return [
-    `import json as __json`,
-    `__pcw_args = __json.loads(r'''${argsJson}''')`,
+    `import json as __json, base64 as __b64`,
+    `__pcw_args = __json.loads(__b64.b64decode(${JSON.stringify(argsB64)}).decode())`,
     `${fn}(*__pcw_args)`,
   ].join("\n");
 }
@@ -56,6 +69,9 @@ export class SparkBridgeHost implements SparkBridge {
   private _ready = false;
   private _connected = false;
   private _bootPromise: Promise<void> | null = null;
+  /** Memoised last-successfully-connected args. Reset by cancel(). */
+  private _lastConnectUri: string | null = null;
+  private _lastConnectToken: string | null = null;
 
   constructor(host: RuntimeHost) {
     this._host = host;
@@ -75,7 +91,12 @@ export class SparkBridgeHost implements SparkBridge {
     if (this._bootPromise !== null) {
       return this._bootPromise;
     }
-    this._bootPromise = this._doEnsureReady();
+    this._bootPromise = this._doEnsureReady().catch((err: unknown) => {
+      // Reset so that a subsequent call can retry the boot sequence.
+      this._bootPromise = null;
+      this._ready = false;
+      throw err;
+    });
     return this._bootPromise;
   }
 
@@ -96,7 +117,7 @@ export class SparkBridgeHost implements SparkBridge {
     //      - makes the import idempotent (Python caches in sys.modules).
     //
     //    The source is embedded as a base64 string to avoid any quoting issues.
-    const b64 = btoa(unescape(encodeURIComponent(runtimeSource)));
+    const b64 = utf8ToBase64(runtimeSource);
     const loaderSnippet = [
       `import base64 as __b64, sys as __sys`,
       `__src = __b64.b64decode(${JSON.stringify(b64)}).decode()`,
@@ -120,10 +141,18 @@ export class SparkBridgeHost implements SparkBridge {
   async connect(uri: string, opts?: ConnectOptions): Promise<void> {
     await this.ensureReady();
     const token: string | null = opts?.token ?? null;
+
+    // Idempotent: skip the Python connect() if already connected with identical args.
+    if (this._connected && this._lastConnectUri === uri && this._lastConnectToken === token) {
+      return;
+    }
+
     const snippet = callPy("connect", uri, token);
     const raw = await this._host.runPython(snippet);
     parseConnectResult(raw);
     this._connected = true;
+    this._lastConnectUri = uri;
+    this._lastConnectToken = token;
   }
 
   // -------------------------------------------------------------------------
@@ -188,6 +217,9 @@ export class SparkBridgeHost implements SparkBridge {
           /* best-effort — ignore */
         });
       this._connected = false;
+      // Clear the connect memo so the next connect() call actually reconnects.
+      this._lastConnectUri = null;
+      this._lastConnectToken = null;
     }
   }
 }

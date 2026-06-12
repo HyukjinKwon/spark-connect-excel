@@ -76,12 +76,15 @@ function buildBootstrapBlob(
       ? `self.${name} = ${JSON.stringify(val)};`
       : `// ${name} not overridden - worker_bootstrap.js uses its same-origin default`;
 
-  // importScripts path is relative to the origin (Vite serves public/ at /).
+  // The worker is created from a Blob URL, whose base is `blob:...` - a
+  // root-relative importScripts('/vendor/...') does NOT resolve there ("invalid
+  // URL"). Use an ABSOLUTE same-origin URL computed on the main thread.
+  const bootstrapUrl = new URL("/vendor/worker_bootstrap.js", self.location.origin).href;
   return [
     `"use strict";`,
     line("PCW_PYODIDE_INDEX_URL", pyodideIndexUrl),
     line("PCW_WHEEL_URL", wheelUrl),
-    `importScripts('/vendor/worker_bootstrap.js');`,
+    `importScripts(${JSON.stringify(bootstrapUrl)});`,
   ].join("\n");
 }
 

@@ -156,7 +156,10 @@ async function main(): Promise<void> {
       }
       req = parsed as BridgeRequest;
     } catch (parseErr) {
-      console.error("[dialogHost] Failed to parse parent message:", parseErr, arg.message);
+      console.error(
+        "[dialogHost] Failed to parse parent message (message content redacted):",
+        parseErr,
+      );
       return;
     }
 
