@@ -100,32 +100,54 @@ for you.
 
 ### Install into Excel (sideload)
 
-**Excel on the web - recommended (no admin, fewest clicks):**
-
-1. With `npm run dev:https` running, open **Excel on the web** in Edge or Chrome.
-2. **Insert -> Add-ins -> Upload My Add-in** -> choose `manifest.xml`.
-3. The **Spark SQL** button appears on the Home ribbon. Open it, set host =
-   `localhost`, port = `8081`, TLS = off, write SQL, click **Run**.
-
-> To let *other people* install it, host the built bundle (`npm run build` ->
-> `dist/`) on an HTTPS origin with COI headers, regenerate the manifest with
-> `npm run build:manifest -- --origin https://your-host`, and share that
-> `manifest.xml` - they do the same 3 steps. See
-> [docs/distribution.md](docs/distribution.md).
-
-**Windows / Mac desktop (also supported):**
+First get the project and start the local add-in server (one time):
 
 ```bash
-npx office-addin-debugging start manifest.xml   # installs certs, starts dev, opens Excel
+git clone https://github.com/HyukjinKwon/spark-connect-excel
+cd spark-connect-excel
+npm install
+npx office-addin-dev-certs install   # trusted local HTTPS cert (once)
 ```
 
-Manual paths - Windows: a trusted shared-folder catalog; Mac: copy `manifest.xml`
-to `~/Library/Containers/com.microsoft.Excel/Data/Documents/wef/`. See
-[scripts/sideload.md](scripts/sideload.md).
+**Excel on the web - recommended (no admin, fewest clicks):**
+
+```bash
+npm run dev:https                    # serve the add-in at https://localhost:3000
+```
+
+Then, in **Excel on the web** (Edge or Chrome): **Insert -> Add-ins ->
+Upload My Add-in -> choose `manifest.xml`**. The **Spark SQL** button appears on
+the Home ribbon.
+
+??? note "Terminal-only web sideload"
+    There is a CLI path, but it needs a workbook URL on OneDrive/SharePoint and
+    an M365 sign-in, so it is not actually simpler than the upload above:
+    `npx office-addin-debugging start manifest.xml web --document <workbook-url>`.
+    For local dev, the manual upload is the fastest.
+
+**Windows / Mac desktop (one command):**
+
+```bash
+git clone https://github.com/HyukjinKwon/spark-connect-excel
+cd spark-connect-excel
+npm install
+npx office-addin-dev-certs install                       # trusted cert (once)
+npm run dev:https &                                       # serve the add-in
+npx office-addin-debugging start manifest.xml desktop --app excel   # sideload + open Excel
+```
+
+`office-addin-debugging start` copies the manifest to the right place and opens
+Excel with the add-in loaded; `office-addin-debugging stop manifest.xml` removes
+it. (Manual paths are in [scripts/sideload.md](scripts/sideload.md).)
 
 > Requires a Chromium-based Excel host (Excel on Windows / Microsoft 365, or
 > Excel on the web in Edge or Chrome). The add-in shows a clear message on
 > unsupported hosts.
+
+To let *other people* install it without cloning, host the built bundle
+(`npm run build` -> `dist/`) on an HTTPS origin with COI headers, regenerate the
+manifest (`npm run build:manifest -- --origin https://your-host`), and share that
+`manifest.xml`. See [docs/distribution.md](docs/distribution.md).
 
 Full installation guide: [docs/installation.md](docs/installation.md)
 

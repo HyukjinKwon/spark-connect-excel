@@ -1,0 +1,76 @@
+# SPDX-License-Identifier: Apache-2.0
+site_name: Spark Connect for Excel
+site_description: "Run Spark SQL (and PySpark) against your own Spark Connect cluster from Excel - no backend server."
+site_author: Hyukjin Kwon
+site_url: https://hyukjinkwon.github.io/spark-connect-excel/
+
+repo_name: HyukjinKwon/spark-connect-excel
+repo_url: https://github.com/HyukjinKwon/spark-connect-excel
+edit_uri: edit/main/docs/
+
+copyright: "Licensed under Apache-2.0."
+
+# Internal lane findings are not part of the published site.
+exclude_docs: |
+  findings-lane-*.md
+
+theme:
+  name: material
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.sections
+    - navigation.top
+    - navigation.indexes
+    - content.code.copy
+    - content.code.annotate
+    - toc.follow
+    - search.suggest
+    - search.highlight
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: deep orange
+      accent: orange
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: deep orange
+      accent: orange
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  icon:
+    repo: fontawesome/brands/github
+
+plugins:
+  - search
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.tabbed:
+      alternate_style: true
+
+nav:
+  - Home: index.md
+  - Getting started:
+      - Installation & sideload: installation.md
+      - Usage: usage.md
+      - Distribution: distribution.md
+  - Reference:
+      - Architecture: architecture.md
+      - Security: security.md
+      - Dependency reuse: reuse.md

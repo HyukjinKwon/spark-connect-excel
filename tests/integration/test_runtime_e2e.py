@@ -16,12 +16,18 @@ grpc-web (browser) transport patch, which is not what a server-side gRPC test
 wants.
 """
 import json
+import os
 
 import pytest
 
 pyspark = pytest.importorskip("pyspark")  # skip whole module if not installed
 
 import spark_excel_runtime as srt  # noqa: E402
+
+# In CI we WANT this to run for real: set CI_REQUIRE_SPARK=1 so a startup failure
+# is a hard error (surfaces the problem) instead of a silent skip. Locally
+# (unset) it skips gracefully when no JVM/Spark is available.
+_REQUIRE = os.environ.get("CI_REQUIRE_SPARK") == "1"
 
 
 @pytest.fixture(scope="module")
@@ -31,7 +37,9 @@ def spark():
         from pyspark.sql import SparkSession
 
         session = SparkSession.builder.remote("local[*]").getOrCreate()
-    except Exception as exc:  # noqa: BLE001 - any startup failure -> skip
+    except Exception as exc:  # noqa: BLE001
+        if _REQUIRE:
+            raise
         pytest.skip(f"Spark Connect server unavailable: {exc}")
     # Inject directly; bypass connect() (which installs the browser grpc-web patch).
     srt._spark = session

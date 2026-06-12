@@ -129,4 +129,6 @@ jobs:
         run: pip install "pyspark[connect]==4.0.0" pandas pyarrow pytest
 
       - name: Runtime integration e2e (real Spark Connect)
+        env:
+          CI_REQUIRE_SPARK: "1" # fail (don't skip) if the server can't start
         run: python -m pytest tests/integration -q
