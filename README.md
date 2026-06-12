@@ -75,7 +75,8 @@ all the Spark machinery.
 git clone https://github.com/HyukjinKwon/spark-connect-excel
 cd spark-connect-excel
 npm install
-npm run dev            # Vite dev server on http://localhost:3000
+npx office-addin-dev-certs install     # once — OS-trusted local HTTPS cert
+npm run dev:https                      # serves https://localhost:3000 (COI headers)
 ```
 
 ### Bring up the Spark Connect stack
@@ -85,15 +86,34 @@ docker compose -f deploy/compose.yaml up
 # Wait ~60s for Spark Connect to become healthy
 ```
 
-### Sideload into Excel
+### Install into Excel (sideload)
+
+**Excel on the web — recommended (no admin, fewest clicks):**
+
+1. With `npm run dev:https` running, open **Excel on the web** in Edge or Chrome.
+2. **Insert → Add-ins → Upload My Add-in** → choose `manifest.xml`.
+3. The **Spark SQL** button appears on the Home ribbon. Open it, set host =
+   `localhost`, port = `8081`, TLS = off, write SQL, click **Run**.
+
+> To let *other people* install it, host the built bundle (`npm run build` →
+> `dist/`) on an HTTPS origin with COI headers, regenerate the manifest with
+> `npm run build:manifest -- --origin https://your-host`, and share that
+> `manifest.xml` — they do the same 3 steps. See
+> [docs/distribution.md](docs/distribution.md).
+
+**Windows / Mac desktop (also supported):**
 
 ```bash
-npx office-addin-debugging start manifest.xml
-# Opens Excel with the add-in sideloaded
+npx office-addin-debugging start manifest.xml   # installs certs, starts dev, opens Excel
 ```
 
-Then in the task pane: host = `localhost`, port = `8081`, TLS = off. Enter a
-SQL query and click **Run**.
+Manual paths — Windows: a trusted shared-folder catalog; Mac: copy `manifest.xml`
+to `~/Library/Containers/com.microsoft.Excel/Data/Documents/wef/`. See
+[scripts/sideload.md](scripts/sideload.md).
+
+> Requires a Chromium-based Excel host (Excel on Windows / Microsoft 365, or
+> Excel on the web in Edge or Chrome). The add-in shows a clear message on
+> unsupported hosts.
 
 Full installation guide: [docs/installation.md](docs/installation.md)
 

@@ -84,40 +84,53 @@ npm run build       # tsc --noEmit + vite build
 
 ## Sideload into Excel
 
-Sideloading lets you test the add-in without publishing it to AppSource.
-See `scripts/sideload.md` for the quick-start command, or follow the steps below.
+Sideloading installs the add-in without publishing it to AppSource.
 
-### Windows
+### Excel on the web — recommended (fewest steps, no admin)
+
+This is the lowest-friction path. **Same machine (dev):**
+
+1. Run `npm run dev:https` (and `npx office-addin-dev-certs install` once).
+2. Open **Excel on the web** in Microsoft Edge or Google Chrome.
+3. **Insert → Add-ins → Upload My Add-in** → choose `manifest.xml`.
+4. The **Spark SQL** button appears on the Home ribbon.
+
+**To let other people install it**, the add-in must be hosted where they can
+reach it — host the built bundle (`npm run build` → `dist/`) on an HTTPS origin
+that sends the COI headers, then point the manifest at it:
 
 ```bash
-npx office-addin-debugging start manifest.xml
-# Opens Excel with the add-in sideloaded and the dev server running
+npm run build:manifest -- --origin https://your-addin-host.example.com
+# share dist/manifest.xml — recipients do the same 3 upload steps
 ```
 
-Or manually: copy `manifest.xml` to `%APPDATA%\Microsoft\Excel\XLSTART\` (Excel
-must be restarted). Alternatively, use the **Insert > Add-ins > My Add-ins >
-Upload My Add-in** dialog.
+(For a quick demo from your own machine, expose `https://localhost:3000` with a
+tunnel like `ngrok http 3000` and `build:manifest` against the tunnel URL.)
 
-### Mac
+### Windows desktop (also supported)
 
 ```bash
 npx office-addin-debugging start manifest.xml
-# On Mac, office-addin-debugging copies the manifest to the correct location
+# Installs the dev cert, starts the dev server, opens Excel with the add-in
+```
+
+Or manually: **File > Options > Trust Center > Trusted Add-in Catalogs**, add a
+shared-folder/URL catalog, then **Insert > My Add-ins > Shared Folder**.
+
+### Mac desktop (also supported)
+
+```bash
+npx office-addin-debugging start manifest.xml
+# office-addin-debugging copies the manifest to the correct location
 ```
 
 Or manually: copy `manifest.xml` to
 `~/Library/Containers/com.microsoft.Excel/Data/Documents/wef/` (create the
 `wef/` directory if it doesn't exist). Restart Excel.
 
-### Excel on the web (Microsoft 365)
-
-1. Open Excel on the web.
-2. Go to **Insert > Add-ins > Upload My Add-in**.
-3. Upload `manifest.xml`.
-
-The add-in must be hosted at the `SourceLocation` in `manifest.xml` (default:
-`https://localhost:3000`). For Excel on the web, the add-in host must be
-accessible from the internet or via a tunnel (e.g. `ngrok`).
+> All paths require a Chromium-based Excel host (Windows / Microsoft 365 or the
+> web in Edge/Chrome). On an unsupported host the add-in shows a clear message
+> rather than failing silently.
 
 ---
 

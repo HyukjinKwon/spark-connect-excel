@@ -5,10 +5,21 @@
 Sideloading installs the add-in from `manifest.xml` without publishing to
 AppSource. This is the standard development and team-deployment path.
 
-## Quick start (recommended)
+## Recommended: Excel on the web (fewest steps, no admin)
+
+1. Start the HTTPS dev server: `npm run dev:https` (run `npx office-addin-dev-certs
+   install` once first).
+2. Open **Excel on the web** in Microsoft Edge or Google Chrome.
+3. **Insert → Add-ins → Upload My Add-in** → choose `manifest.xml`.
+
+That's it — no catalog, no admin, no desktop config. To share with others, host
+the bundle and point the manifest at it (see `docs/distribution.md`), then they
+upload that `manifest.xml` the same way.
+
+## Quick start for desktop (Windows / Mac)
 
 ```bash
-# Starts the dev server AND sideloads the add-in into Excel:
+# Starts the dev server AND sideloads the add-in into desktop Excel:
 npx office-addin-debugging start manifest.xml
 ```
 
