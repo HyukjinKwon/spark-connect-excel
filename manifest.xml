@@ -141,7 +141,7 @@
 
       <bt:ShortStrings>
         <bt:String id="Group.Label"           DefaultValue="Spark Connect" />
-        <bt:String id="SparkSQLButton.Label"  DefaultValue="Spark SQL" />
+        <bt:String id="SparkSQLButton.Label"  DefaultValue="Apache Spark" />
       </bt:ShortStrings>
 
       <bt:LongStrings>
