@@ -15,6 +15,10 @@ cluster, land the result in a worksheet range, refresh it, and chart it - with
   <img src="demo.svg" alt="Type Spark SQL, run it, rows land in the grid with a chart - no backend." width="820" />
 </p>
 
+<p align="center">
+  <img src="screenshots/web-demo.png" alt="The web demo: connect, run Spark SQL, results land in a typed table." width="760" />
+</p>
+
 ## Highlights
 
 - **SQL in Excel** - results land as typed cells; Spark's schema drives number formats.

@@ -14,57 +14,30 @@ The compute runs on the user's cluster; the query client runs in the browser via
 
 ---
 
-## ASCII diagram
+## Architecture diagram
 
-```
-  User's Excel workbook
-  +-----------------------------------------------------------------+
-  |  Excel host (Windows WebView2 / Mac WKWebView / Excel-on-web)   |
-  |  +----------------------------------------------------------+   |
-  |  |  Task Pane  (taskpane.html / taskpane.ts)                |   |
-  |  |  - Connection form (host, port, TLS, token)              |   |
-  |  |  - SQL editor + row cap                                  |   |
-  |  |  - Run / Refresh / Insert Chart buttons                  |   |
-  |  |  - Error display                                         |   |
-  |  |                                                          |   |
-  |  |  SparkBridgeClient  ---- postMessage --------------------|---|--+
-  |  +----------------------------------------------------------+   |  |
-  |                                                                  |  |
-  |  +----------------------------------------------------------+   |  |
-  |  |  COI Host Window  (Office Dialog - dialog.html)          |<--|--+
-  |  |                                                          |   |
-  |  |  Served with:                                            |   |
-  |  |    Cross-Origin-Opener-Policy: same-origin               |   |
-  |  |    Cross-Origin-Embedder-Policy: credentialless          |   |
-  |  |  -> crossOriginIsolated === true -> SharedArrayBuffer OK   |   |
-  |  |                                                          |   |
-  |  |  SparkBridgeHost  ->  SparkBridgeClient (task pane)       |   |
-  |  |       |                                                  |   |
-  |  |  PyodideHost  (Web Worker + bridge.js SAB handshake)     |   |
-  |  |       |                                                  |   |
-  |  |  spark_excel_runtime.py  (loaded into Pyodide)           |   |
-  |  |       |  connect() / run_sql() / schema_of()             |   |
-  |  |       |                                                  |   |
-  |  |  pyspark_connect_web  (real PySpark Connect client)      |   |
-  |  |       |  grpc-web over fetch                             |   |
-  |  +-------+--------------------------------------------------+   |
-  +----------+------------------------------------------------------+
-             |  HTTP/HTTPS  (grpc-web frames)
-             v
-  +-----------------------------------------------------------------+
-  |  User's infrastructure                                          |
-  |                                                                 |
-  |  Envoy  :8081  (dev) / :8443 (prod, TLS)                       |
-  |    - CORS: allows add-in origin                                 |
-  |    - grpc_web filter: translates grpc-web -> gRPC/HTTP2          |
-  |    - Prod: Lua gate checks Authorization: Bearer <token>        |
-  |             |  gRPC / HTTP2                                     |
-  |             v                                                   |
-  |  Spark Connect server  :15002 (Spark 4.x)                      |
-  +-----------------------------------------------------------------+
+```mermaid
+flowchart TD
+    subgraph excel["Excel host (Windows WebView2 / Mac WKWebView / Excel on the web)"]
+        tp["Task pane (taskpane.html): connection form, SQL editor, Run / Refresh / Insert Chart"]
+        subgraph dialog["COI dialog window (dialog.html) - COOP: same-origin + COEP: credentialless"]
+            host["PyodideHost: Web Worker + bridge.js SharedArrayBuffer handshake"]
+            rt["spark_excel_runtime.py: connect / run_sql / schema_of"]
+            pcw["pyspark-connect-web: real PySpark Connect client"]
+        end
+    end
+    envoy["Envoy grpc-web proxy (:8081 dev / :8443 prod TLS)"]
+    spark["Spark Connect server (Spark 4.x) :15002"]
+    cells["Worksheet range + chart"]
 
-  pandas result (toPandas()) -> SparkResult JSON
-       -> Office.js range.values -> worksheet cells + chart
+    tp -- "SparkBridge over postMessage" --> host
+    host --> rt
+    rt --> pcw
+    pcw -- "grpc-web over fetch" --> envoy
+    envoy -- "gRPC / HTTP2" --> spark
+    spark -- "Arrow result batches" --> pcw
+    pcw -- "SparkResult JSON" --> tp
+    tp -- "Office.js range.values" --> cells
 ```
 
 ---

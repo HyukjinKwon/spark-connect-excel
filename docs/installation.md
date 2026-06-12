@@ -9,7 +9,7 @@
 | Node.js | 20 LTS | `node --version` |
 | npm | 10+ | Comes with Node 20 |
 | Python | 3.11+ | For running the Python unit tests locally |
-| Docker (optional) | 20+ | For the local Spark Connect + Envoy stack |
+| Docker (optional) | 20+ | Only needed for the full stack (Spark Connect + Envoy + static host); a local server just needs Java 17 + `pip install "pyspark[connect]"` |
 | Excel | 2019 / Microsoft 365 | Windows, Mac, or Excel on the web |
 
 > **Browser requirement:** The add-in requires a Chromium-based Excel host
@@ -145,7 +145,20 @@ The connection form in the task pane accepts:
 | TLS | off | on |
 | Token | (empty for dev) | Bearer token for prod |
 
-To bring up the local Spark Connect + Envoy stack:
+### A Spark Connect server - two ways
+
+**Local (no Docker) - easiest for dev/tests.** Install PySpark with the
+Connect extra (needs Java 17) and start a local server:
+
+```bash
+pip install "pyspark[connect]==4.0.0"
+# start a Spark Connect server on localhost:15002
+start-connect-server.sh --packages org.apache.spark:spark-connect_2.13:4.0.0
+```
+
+This is what the Python integration tests use (`SparkSession.builder.remote("local[*]")`). For the browser add-in you also need the Envoy grpc-web proxy in front of it (the deploy stack provides one, or run a local Envoy).
+
+**Full stack (Docker) - one command.** Brings up Spark Connect + Envoy + a static host together:
 
 ```bash
 docker compose -f deploy/compose.yaml up

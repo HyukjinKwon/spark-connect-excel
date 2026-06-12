@@ -1,0 +1,22 @@
+/* SPDX-License-Identifier: Apache-2.0 */
+/* Brand palette for the docs site: Excel green primary + Spark orange accent. */
+
+:root {
+  --md-primary-fg-color: #217346; /* Excel green */
+  --md-primary-fg-color--light: #2e8b57;
+  --md-primary-fg-color--dark: #185c37; /* deeper Excel green (header on scroll) */
+  --md-accent-fg-color: #e25a1c; /* Spark orange */
+  --md-accent-fg-color--transparent: rgba(226, 90, 28, 0.1);
+}
+
+[data-md-color-scheme="slate"] {
+  --md-primary-fg-color: #2e8b57;
+  --md-primary-fg-color--light: #3aa06a;
+  --md-primary-fg-color--dark: #217346;
+  --md-accent-fg-color: #f0772f; /* slightly brighter orange for dark mode */
+}
+
+/* Make inline links pick up the Spark-orange accent on hover. */
+.md-typeset a:hover {
+  color: var(--md-accent-fg-color);
+}

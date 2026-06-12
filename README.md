@@ -5,13 +5,20 @@
 [![CI](https://github.com/HyukjinKwon/spark-connect-excel/actions/workflows/ci.yml/badge.svg)](https://github.com/HyukjinKwon/spark-connect-excel/actions/workflows/ci.yml)
 [![E2E (COI gate)](https://github.com/HyukjinKwon/spark-connect-excel/actions/workflows/e2e.yml/badge.svg)](https://github.com/HyukjinKwon/spark-connect-excel/actions/workflows/e2e.yml)
 [![License](https://img.shields.io/badge/license-Apache--2.0-green.svg)](LICENSE)
+[![Docs](https://img.shields.io/badge/docs-GitHub%20Pages-blue)](https://hyukjinkwon.github.io/spark-connect-excel/)
 
 **Power Query, but the engine is your Spark cluster.**
 
 <p align="center">
   <img src="docs/demo.svg" alt="Spark Connect for Excel: write Spark SQL in the task pane, run it, and results land in the grid with a chart - no backend server." width="900" />
   <br/>
-  <em>Concept animation (mockup). Type Spark SQL -> Run -> rows land in the grid -> chart inserted.</em>
+  <em>Spark SQL and PySpark run in your browser; results land in the grid and a native chart is drawn.</em>
+</p>
+
+<p align="center">
+  <img src="docs/screenshots/web-demo.png" alt="The web demo: connect, run Spark SQL, results land in a typed table." width="820" />
+  <br/>
+  <em>The zero-install web demo (real UI): connect, run Spark SQL or PySpark, results render as a typed table.</em>
 </p>
 
 An Excel add-in that runs a Spark SQL query against your own
@@ -34,36 +41,13 @@ entirely in-browser via
 - **Zero-install web demo** - a standalone page (`/demo`) that runs **SQL _or_ PySpark**
   in the browser, no Excel required - the easiest way to try it.
 
-## Architecture
-
-```
-  Task Pane (Office.js UI)
-       |  SparkBridgeClient + postMessage
-       v
-  COI Dialog Window  <- served with COOP: same-origin + COEP: credentialless
-  (crossOriginIsolated === true -> SharedArrayBuffer OK)
-       |  Pyodide + pyspark-connect-web (real PySpark Connect client)
-       |  grpc-web over fetch
-       v
-  Envoy grpc-web proxy  ->  Spark Connect server (Spark 4.x)
-
-  pandas result -> SparkResult JSON -> Office.js range + chart
-```
-
-Full details: [docs/architecture.md](docs/architecture.md)
-
-The critical design choice: Pyodide and pyspark-connect-web run in an
-**Office Dialog window** that we serve with our own COOP/COEP headers, giving
-us `crossOriginIsolated === true` and `SharedArrayBuffer` without depending on
-Excel's embedding context. The task pane is pure Office.js UI; the dialog hosts
-all the Spark machinery.
-
 ## Quickstart
 
 ### Prerequisites
 
-- Node 20, Python 3.11+, Docker (for the Spark stack)
-- Excel 2019 / Microsoft 365 (Windows, Mac, or web)
+- Node 20.
+- Java 17 + Python 3.11 (to run a local Spark Connect server) - OR Docker (for the full Spark + Envoy stack).
+- A Chromium-based Excel host: Excel on Windows / Microsoft 365, or Excel on the web in Edge or Chrome.
 
 ### Install and dev
 
@@ -119,11 +103,11 @@ Then, in **Excel on the web** (Edge or Chrome): **Insert -> Add-ins ->
 Upload My Add-in -> choose `manifest.xml`**. The **Spark SQL** button appears on
 the Home ribbon.
 
-??? note "Terminal-only web sideload"
-    There is a CLI path, but it needs a workbook URL on OneDrive/SharePoint and
-    an M365 sign-in, so it is not actually simpler than the upload above:
-    `npx office-addin-debugging start manifest.xml web --document <workbook-url>`.
-    For local dev, the manual upload is the fastest.
+> Terminal-only web sideload: a CLI path exists
+> (`npx office-addin-debugging start manifest.xml web --document <workbook-url>`)
+> but it needs a workbook URL on OneDrive/SharePoint and an M365 sign-in, so it
+> is not actually simpler than the upload above. For local dev, the manual
+> upload is the fastest.
 
 **Windows / Mac desktop (one command):**
 
@@ -151,27 +135,11 @@ manifest (`npm run build:manifest -- --origin https://your-host`), and share tha
 
 Full installation guide: [docs/installation.md](docs/installation.md)
 
-## Powered by pyspark-connect-web
-
-The Spark plumbing (real PySpark Connect client, in-browser via Pyodide) comes
-from [pyspark-connect-web](https://github.com/HyukjinKwon/pyspark-client-wasm),
-reused without forking. See [docs/reuse.md](docs/reuse.md) for what we vendor and
-how to re-sync.
-
 ## Documentation
 
-| Document | Contents |
-|----------|---------|
-| [docs/architecture.md](docs/architecture.md) | Full architecture, ASCII diagram, design decisions |
-| [docs/installation.md](docs/installation.md) | Prerequisites, build, dev server, sideload |
-| [docs/usage.md](docs/usage.md) | Connect, query, refresh, chart - user guide |
-| [docs/security.md](docs/security.md) | COI, token handling, CORS, TLS threat model |
-| [docs/reuse.md](docs/reuse.md) | pyspark-connect-web provenance, vendor sync |
-| [docs/distribution.md](docs/distribution.md) | Sideload vs. AppSource, hosting requirements |
-| [deploy/README.md](deploy/README.md) | Spark + Envoy Docker stack |
-| [tests/e2e/README.md](tests/e2e/README.md) | E2E harness: live COI gate + deferred Office/Spark matrix |
-| [DECISIONS.md](DECISIONS.md) | Architectural invariants |
-| [API_CONTRACT.md](API_CONTRACT.md) | SparkBridge seam |
+Full documentation - installation, usage, architecture, security, and
+distribution - is on the docs site:
+**<https://hyukjinkwon.github.io/spark-connect-excel/>**.
 
 ## Compatibility
 
