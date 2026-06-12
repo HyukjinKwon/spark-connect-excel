@@ -76,15 +76,16 @@ function buildBootstrapBlob(
       ? `self.${name} = ${JSON.stringify(val)};`
       : `// ${name} not overridden - worker_bootstrap.js uses its same-origin default`;
 
-  // The worker is created from a Blob URL, whose base is `blob:...` - a
-  // root-relative importScripts('/vendor/...') does NOT resolve there ("invalid
-  // URL"). Use an ABSOLUTE same-origin URL computed on the main thread.
+  // This shim is a MODULE worker: recent Pyodide (v314+) refuses classic
+  // workers, and worker_bootstrap.js loads pyodide.mjs via dynamic import (no
+  // importScripts in a module worker). We set the PCW_* globals, then dynamic-
+  // import the bootstrap by ABSOLUTE same-origin URL (a root-relative path does
+  // not resolve from a blob: worker). Top-level await is allowed in a module worker.
   const bootstrapUrl = new URL("/vendor/worker_bootstrap.js", self.location.origin).href;
   return [
-    `"use strict";`,
     line("PCW_PYODIDE_INDEX_URL", pyodideIndexUrl),
     line("PCW_WHEEL_URL", wheelUrl),
-    `importScripts(${JSON.stringify(bootstrapUrl)});`,
+    `await import(${JSON.stringify(bootstrapUrl)});`,
   ].join("\n");
 }
 
@@ -153,9 +154,11 @@ export class PyodideHost implements RuntimeHost {
       const blob = new Blob([shimSrc], { type: "application/javascript" });
       this._blobUrl = URL.createObjectURL(blob);
 
-      // Classic worker (no {type:"module"}) — worker_bootstrap.js uses
-      // importScripts, which is only available in classic workers.
-      const worker = new Worker(this._blobUrl);
+      // Module worker: recent Pyodide (v314+) refuses classic workers, and the
+      // bootstrap loads pyodide.mjs via dynamic import. Messages posted before
+      // the module finishes evaluating are queued and delivered once its
+      // addEventListener("message") handler is registered.
+      const worker = new Worker(this._blobUrl, { type: "module" });
       this._worker = worker;
 
       // ---- 2. Wire bridge.js on the main thread ----------------------------

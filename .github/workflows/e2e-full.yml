@@ -26,7 +26,7 @@ jobs:
     env:
       E2E_FULL: "1"
       E2E_DEMO_URL: http://localhost:8000/demo/demo.html
-      PYODIDE_VERSION: "0.28.0"
+      PYODIDE_VERSION: "314.0.0"
       PYSPARK_CLIENT_VERSION: "4.1.2"
     steps:
       - uses: actions/checkout@v4
