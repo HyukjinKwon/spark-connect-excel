@@ -20,7 +20,7 @@ test.describe("full-stack: Pyodide + grpc-web + Spark Connect", () => {
   test.skip(!FULL, "set E2E_FULL=1 with the deploy stack up + assets vendored");
 
   test("connect and run a Spark SQL query, end to end", async ({ page }) => {
-    test.setTimeout(360_000); // Pyodide cold boot + wheel install is slow
+    test.setTimeout(780_000); // Pyodide 314 cold boot + wheel install + first Spark call is slow
 
     // Capture the full browser console + page errors so a failure shows WHY
     // (Pyodide boot / wheel install / grpc-web errors land here).
@@ -43,7 +43,7 @@ test.describe("full-stack: Pyodide + grpc-web + Spark Connect", () => {
     // Booting Pyodide + installing wheels + connecting is slow on a cold runner.
     const connStatus = page.locator(".demo-status").first();
     try {
-      await expect(connStatus).toContainText("Connected", { timeout: 300_000 });
+      await expect(connStatus).toContainText("Connected", { timeout: 660_000 });
     } catch (e) {
       const txt = await connStatus.textContent().catch(() => "(no status)");
       console.log("=== CONNECT did not complete. Last status:", txt);

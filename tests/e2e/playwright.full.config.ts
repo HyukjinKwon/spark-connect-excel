@@ -8,8 +8,8 @@ import { defineConfig, devices } from "@playwright/test";
 export default defineConfig({
   testDir: ".",
   testMatch: "full-stack.spec.ts",
-  timeout: 360_000,
-  expect: { timeout: 300_000 },
+  timeout: 780_000,
+  expect: { timeout: 660_000 },
   retries: 0,
   workers: 1,
   reporter: [
