@@ -187,13 +187,17 @@ function boot(): void {
   }
 
   connectBtn.onclick = async () => {
-    busy(true, connStatus, "Starting engine and connecting... (first run downloads Pyodide)");
+    busy(true, connStatus, "Starting engine (first run downloads Pyodide + wheels)...");
     try {
       const uri = buildRemoteUri({
         host: cHost.value.trim(),
         port: Number(cPort.value) || 8081,
         tls: cTls.checked,
       });
+      // Boot first (distinct status), then connect - so it's clear which phase
+      // is in progress (engine boot vs the Spark connection).
+      await bridge.ensureReady();
+      connStatus.textContent = "Engine ready. Connecting to Spark...";
       await bridge.connect(uri, cToken.value ? { token: cToken.value } : undefined);
       connected = true;
       connStatus.textContent = `Connected - ${uri}`;

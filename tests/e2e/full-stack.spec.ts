@@ -25,8 +25,13 @@ test.describe("full-stack: Pyodide + grpc-web + Spark Connect", () => {
     // Capture the full browser console + page errors so a failure shows WHY
     // (Pyodide boot / wheel install / grpc-web errors land here).
     const log: string[] = [];
-    page.on("console", (m) => log.push(`[${m.type()}] ${m.text()}`));
+    page.on("console", (m) => log.push(`[page:${m.type()}] ${m.text()}`));
     page.on("pageerror", (e) => log.push(`[pageerror] ${e.message}`));
+    // Pyodide + pyspark-connect-web run in a Web Worker - capture ITS console too
+    // (the boot/connect output lives there, not on the main thread).
+    page.on("worker", (w) => {
+      w.on("console", (m) => log.push(`[worker:${m.type()}] ${m.text()}`));
+    });
 
     await page.goto(DEMO_URL);
 
