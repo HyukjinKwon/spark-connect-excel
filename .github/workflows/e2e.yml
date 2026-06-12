@@ -1,0 +1,87 @@
+# SPDX-License-Identifier: Apache-2.0
+#
+# e2e.yml — Playwright end-to-end tests (COI gate).
+#
+# Runs the automatable subset of the e2e harness:
+#   1. Build the add-in (produces dist/ with COI headers)
+#   2. Install Playwright + Chromium
+#   3. Run coi.spec.ts — asserts crossOriginIsolated === true + SAB availability
+#
+# The Spark/Office matrix (query-flow.spec.ts) is NOT run here — it requires a
+# real Excel host and a running Spark Connect server, neither of which are
+# available in standard GitHub Actions. Those tests are marked test.fixme and
+# are skipped automatically (E2E_REQUIRE_STACK is not set).
+#
+# The Playwright HTML report is uploaded as a build artifact so failures can be
+# diagnosed without re-running locally.
+
+name: E2E (COI gate)
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+
+jobs:
+  e2e:
+    name: Playwright COI gate
+    runs-on: ubuntu-latest
+
+    steps:
+      # -----------------------------------------------------------------------
+      # Checkout
+      # -----------------------------------------------------------------------
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # -----------------------------------------------------------------------
+      # Node 20 + npm cache
+      # -----------------------------------------------------------------------
+      - name: Set up Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      # -----------------------------------------------------------------------
+      # Install Node dependencies
+      # -----------------------------------------------------------------------
+      - name: Install Node dependencies
+        run: npm ci
+
+      # -----------------------------------------------------------------------
+      # Build the add-in
+      # vite build produces dist/ which vite preview serves with COI headers.
+      # The e2e tests (playwright.config.ts webServer) run `npm run preview`
+      # against this dist/.
+      # -----------------------------------------------------------------------
+      - name: Build (vite)
+        run: npm run build
+
+      # -----------------------------------------------------------------------
+      # Install Playwright + Chromium
+      # Only Chromium is used (see playwright.config.ts — COEP credentialless
+      # is a Chromium-only feature; Office hosts are Chromium-based).
+      # -----------------------------------------------------------------------
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      # -----------------------------------------------------------------------
+      # Run the COI gate (coi.spec.ts only)
+      # E2E_REQUIRE_STACK is NOT set, so query-flow.spec.ts tests are skipped.
+      # -----------------------------------------------------------------------
+      - name: Run COI gate (Playwright)
+        run: npx playwright test coi.spec.ts --config tests/e2e/playwright.config.ts
+
+      # -----------------------------------------------------------------------
+      # Upload Playwright report as an artifact (available for 7 days)
+      # Upload even on failure so the report is available for diagnosis.
+      # -----------------------------------------------------------------------
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: tests/e2e/playwright-report/
+          retention-days: 7

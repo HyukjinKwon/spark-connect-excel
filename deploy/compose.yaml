@@ -1,0 +1,104 @@
+# SPDX-License-Identifier: Apache-2.0
+#
+# docker compose for spark-connect-excel (Lane I).
+#
+# Adapted from pyspark-connect-web's deploy/compose.yaml.
+# Key differences from the upstream pcw stack:
+#   * Static host serves the built Excel add-in (dist/) instead of JupyterLite.
+#   * COEP on the static host is `credentialless` (NOT `require-corp`) —
+#     DECISIONS #2: lets the Office dialog load cross-origin Pyodide / PyPI
+#     wheels without those origins needing to send CORP headers.
+#   * CORS allow-origin covers the add-in origins (localhost:3000 dev + the
+#     static host on port 8000). See deploy/envoy.yaml.
+#   * Static host port published as 8000 (consistent with pcw); the add-in
+#     SourceLocation in the manifest points at http://localhost:8000.
+#
+# Bring up the full dev stack:
+#   docker compose -f deploy/compose.yaml up
+#
+# Bring up with prod hardening overlay:
+#   docker compose -f deploy/compose.yaml -f deploy/compose.prod.yaml up -d
+#
+# Services:
+#   spark-connect  : Spark 4.0.0 Connect server (gRPC :15002, private to compose net)
+#   static         : static file server for ../dist (the built add-in)
+#   envoy          : grpc-web proxy (:8081) + static host (:8000) with COOP/COEP
+#
+# The browser (add-in dialog) connects to:
+#   sc://localhost:8081/;transport=grpcweb
+#
+# The add-in task pane is served from:
+#   http://localhost:8000/   (headers: COOP same-origin + COEP credentialless)
+#
+# Version pins:
+#   apache/spark:4.0.0          — Spark 4.0.0, bundles Spark Connect server
+#   envoyproxy/envoy:v1.31-latest — has envoy.filters.http.grpc_web
+#   halverneus/static-file-server:v1.8.10 — tiny static server
+#
+# NOTE: the Spark Connect *package* coordinate must match the Spark version +
+# Scala edition. For Spark 4.0.0 + Scala 2.13:
+#   org.apache.spark:spark-connect_2.13:4.0.0
+
+services:
+  spark-connect:
+    image: apache/spark:4.0.0
+    container_name: sce-spark-connect
+    command:
+      - /bin/bash
+      - -c
+      - >-
+        /opt/spark/sbin/start-connect-server.sh
+        --packages org.apache.spark:spark-connect_2.13:4.0.0
+        --conf spark.connect.grpc.binding.address=0.0.0.0
+        --conf spark.connect.grpc.binding.port=15002
+        && tail -f /opt/spark/logs/*.out
+    environment:
+      SPARK_NO_DAEMONIZE: "false"
+    expose:
+      - "15002"
+    # Expose the raw gRPC port to the host so e2e reference scripts
+    # can connect with a native Spark Connect client over plain gRPC.
+    # This mapping is removed in the prod overlay (compose.prod.yaml).
+    ports:
+      - "15002:15002"
+    healthcheck:
+      test: ["CMD-SHELL", "timeout 1 bash -c '</dev/tcp/localhost/15002' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 60s
+
+  static:
+    # Serves the built Excel add-in (dist/) with COOP/COEP isolation headers.
+    # COEP is `credentialless` (DECISIONS #2) so the Office dialog can load
+    # cross-origin Pyodide / PyPI wheels without those origins sending CORP.
+    #
+    # ../dist is populated by `npm run build` (vite build output).
+    # Until `npm run build` has run this directory may not exist; create it:
+    #   mkdir -p dist && echo '{}' > dist/placeholder.json
+    image: halverneus/static-file-server:v1.8.10
+    container_name: sce-static
+    environment:
+      FOLDER: /web
+      PORT: "80"
+    expose:
+      - "80"
+    volumes:
+      # Mount the built add-in. Use :ro so the server cannot modify sources.
+      - ../dist:/web:ro
+
+  envoy:
+    image: envoyproxy/envoy:v1.31-latest
+    container_name: sce-envoy
+    command: ["-c", "/etc/envoy/envoy.yaml", "--service-cluster", "sce-envoy"]
+    volumes:
+      - ./envoy.yaml:/etc/envoy/envoy.yaml:ro
+    ports:
+      - "8081:8081"   # grpc-web endpoint  (sc://localhost:8081/;transport=grpcweb)
+      - "8000:8000"   # add-in static host  (COOP same-origin + COEP credentialless)
+      - "9901:9901"   # Envoy admin (dev only; not published in prod)
+    depends_on:
+      spark-connect:
+        condition: service_healthy
+      static:
+        condition: service_started

@@ -1,0 +1,583 @@
+/* SPDX-License-Identifier: Apache-2.0 */
+/*
+ * ui.css — Task-pane stylesheet for Spark Connect for Excel (Lane E).
+ *
+ * Designed for a narrow Office task pane (~320px wide).
+ * Spark orange accent: #E25A1C.
+ * No external CSS frameworks — plain CSS only.
+ */
+
+/* ── Reset & base ─────────────────────────────────────────────────────────── */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family:
+    "Segoe UI",
+    system-ui,
+    -apple-system,
+    sans-serif;
+  font-size: 13px;
+  line-height: 1.4;
+  color: #1f1f1f;
+  background: #f8f8f8;
+}
+
+/* ── Root layout ──────────────────────────────────────────────────────────── */
+
+#app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.sc-pane {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Header bar */
+.sc-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #fff;
+  border-bottom: 2px solid #e25a1c;
+  flex-shrink: 0;
+}
+
+.sc-header__logo {
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  background: #e25a1c;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 700;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.sc-header__title {
+  font-weight: 600;
+  font-size: 13px;
+  color: #1f1f1f;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+}
+
+/* Scrollable body */
+.sc-body {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ── Sections ─────────────────────────────────────────────────────────────── */
+
+.sc-section {
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.sc-section__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  background: #f2f2f2;
+  border-bottom: 1px solid #e0e0e0;
+  cursor: pointer;
+  user-select: none;
+}
+
+.sc-section__title {
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #555;
+}
+
+.sc-section__chevron {
+  font-size: 9px;
+  color: #888;
+  transition: transform 0.15s ease;
+}
+
+.sc-section__head[aria-expanded="true"] .sc-section__chevron {
+  transform: rotate(180deg);
+}
+
+.sc-section__body {
+  padding: 10px;
+}
+
+.sc-section__body.sc-collapsed {
+  display: none;
+}
+
+/* ── Status badges ────────────────────────────────────────────────────────── */
+
+.sc-status-bar {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding: 6px 10px;
+  background: #fafafa;
+  border-bottom: 1px solid #e0e0e0;
+  flex-shrink: 0;
+}
+
+.sc-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 7px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.sc-badge--green {
+  background: #d4f5d4;
+  color: #1a6b1a;
+}
+
+.sc-badge--amber {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.sc-badge--red {
+  background: #f5d4d4;
+  color: #6b1a1a;
+}
+
+.sc-badge--neutral {
+  background: #e8e8e8;
+  color: #555;
+}
+
+/* Engine-starting banner */
+.sc-engine-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: #fff8f0;
+  border: 1px solid #f5c68a;
+  border-radius: 5px;
+  font-size: 12px;
+  color: #7a4100;
+}
+
+.sc-engine-banner__spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid #f5c68a;
+  border-top-color: #e25a1c;
+  border-radius: 50%;
+  animation: sc-spin 0.8s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes sc-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ── Forms ────────────────────────────────────────────────────────────────── */
+
+.sc-form-row {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-bottom: 8px;
+}
+
+.sc-form-row:last-child {
+  margin-bottom: 0;
+}
+
+.sc-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #444;
+}
+
+.sc-input,
+.sc-textarea,
+.sc-select {
+  width: 100%;
+  padding: 5px 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 12px;
+  font-family: inherit;
+  color: #1f1f1f;
+  background: #fff;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+  outline: none;
+}
+
+.sc-input:focus,
+.sc-textarea:focus,
+.sc-select:focus {
+  border-color: #e25a1c;
+  box-shadow: 0 0 0 2px rgba(226, 90, 28, 0.15);
+}
+
+.sc-input--mono {
+  font-family: "Cascadia Code", "Consolas", "Courier New", monospace;
+  font-size: 11px;
+  color: #444;
+  background: #f7f7f7;
+}
+
+.sc-textarea {
+  resize: vertical;
+  min-height: 80px;
+  font-family: "Cascadia Code", "Consolas", "Courier New", monospace;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.sc-input[type="number"] {
+  max-width: 120px;
+}
+
+.sc-inline-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sc-inline-row .sc-label {
+  margin: 0;
+}
+
+/* Checkbox */
+.sc-checkbox {
+  width: 14px;
+  height: 14px;
+  accent-color: #e25a1c;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+/* ── Buttons ──────────────────────────────────────────────────────────────── */
+
+.sc-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    opacity 0.15s ease;
+  white-space: nowrap;
+  outline: none;
+}
+
+.sc-btn:focus-visible {
+  box-shadow: 0 0 0 2px rgba(226, 90, 28, 0.4);
+}
+
+.sc-btn--primary {
+  background: #e25a1c;
+  color: #fff;
+}
+
+.sc-btn--primary:hover:not(:disabled) {
+  background: #c44d17;
+}
+
+.sc-btn--primary:active:not(:disabled) {
+  background: #a84012;
+}
+
+.sc-btn--secondary {
+  background: #e8e8e8;
+  color: #333;
+}
+
+.sc-btn--secondary:hover:not(:disabled) {
+  background: #d8d8d8;
+}
+
+.sc-btn--secondary:active:not(:disabled) {
+  background: #c8c8c8;
+}
+
+.sc-btn--danger {
+  background: #c00;
+  color: #fff;
+}
+
+.sc-btn--danger:hover:not(:disabled) {
+  background: #a00;
+}
+
+.sc-btn--ghost {
+  background: transparent;
+  color: #e25a1c;
+  padding: 3px 8px;
+  font-weight: 500;
+}
+
+.sc-btn--ghost:hover:not(:disabled) {
+  background: rgba(226, 90, 28, 0.08);
+}
+
+.sc-btn--sm {
+  padding: 3px 8px;
+  font-size: 11px;
+}
+
+.sc-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.sc-btn-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* ── Error / info areas ───────────────────────────────────────────────────── */
+
+.sc-error {
+  padding: 7px 10px;
+  background: #fff5f5;
+  border: 1px solid #f5c6cb;
+  border-radius: 4px;
+  color: #721c24;
+  font-size: 12px;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.sc-error:empty {
+  display: none;
+}
+
+.sc-success {
+  padding: 7px 10px;
+  background: #f0fff4;
+  border: 1px solid #c3e6cb;
+  border-radius: 4px;
+  color: #155724;
+  font-size: 12px;
+}
+
+.sc-success:empty {
+  display: none;
+}
+
+.sc-info {
+  padding: 7px 10px;
+  background: #e8f4fd;
+  border: 1px solid #bee5eb;
+  border-radius: 4px;
+  color: #0c5460;
+  font-size: 12px;
+}
+
+/* Truncation warning */
+.sc-truncation-warn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  background: #fff3cd;
+  border: 1px solid #ffc107;
+  border-radius: 4px;
+  font-size: 11px;
+  color: #856404;
+}
+
+/* ── SQL editor area ──────────────────────────────────────────────────────── */
+
+.sc-editor-wrap {
+  position: relative;
+}
+
+.sc-editor-wrap .sc-textarea {
+  padding-right: 6px;
+}
+
+/* ── Destination hint ─────────────────────────────────────────────────────── */
+
+.sc-dest-hint {
+  font-size: 11px;
+  color: #666;
+  padding: 3px 0;
+  font-style: italic;
+}
+
+/* ── Run controls ─────────────────────────────────────────────────────────── */
+
+.sc-run-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sc-cap-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.sc-cap-row .sc-label {
+  white-space: nowrap;
+}
+
+/* ── Saved queries list ───────────────────────────────────────────────────── */
+
+.sc-query-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.sc-query-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 10px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.sc-query-item:last-child {
+  border-bottom: none;
+}
+
+.sc-query-item__sql {
+  font-family: "Cascadia Code", "Consolas", "Courier New", monospace;
+  font-size: 11px;
+  color: #333;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.sc-query-item__meta {
+  font-size: 10px;
+  color: #888;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sc-query-item__actions {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.sc-query-item__status {
+  font-size: 10px;
+  color: #555;
+  font-style: italic;
+  min-height: 1.2em;
+}
+
+.sc-query-empty {
+  font-size: 12px;
+  color: #888;
+  text-align: center;
+  padding: 12px 0;
+  font-style: italic;
+}
+
+/* Refresh-all row */
+.sc-refresh-all-row {
+  display: flex;
+  justify-content: flex-end;
+  padding: 6px 10px;
+  border-top: 1px solid #f0f0f0;
+}
+
+/* ── Spinner (inline, small) ─────────────────────────────────────────────── */
+
+.sc-spinner {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border: 2px solid rgba(226, 90, 28, 0.25);
+  border-top-color: #e25a1c;
+  border-radius: 50%;
+  animation: sc-spin 0.8s linear infinite;
+  vertical-align: middle;
+}
+
+/* ── Divider ──────────────────────────────────────────────────────────────── */
+
+.sc-divider {
+  border: none;
+  border-top: 1px solid #e0e0e0;
+  margin: 2px 0;
+}
+
+/* ── URI preview (read-only monospace input in connection form) ───────────── */
+
+.sc-uri-preview {
+  font-family: "Cascadia Code", "Consolas", "Courier New", monospace;
+  font-size: 10px;
+  background: #f7f7f7;
+  color: #444;
+}
+
+/* ── Utility ──────────────────────────────────────────────────────────────── */
+
+.sc-hidden {
+  display: none !important;
+}
+
+.sc-mt-4 {
+  margin-top: 4px;
+}
+
+.sc-mt-8 {
+  margin-top: 8px;
+}

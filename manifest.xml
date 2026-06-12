@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<!--
+  manifest.xml — Office Add-in manifest for "Spark Connect for Excel"
+  SourceLocation below targets the dev server (https://localhost:3000).
+  At release, the build pipeline substitutes the production CDN origin.
+-->
+<OfficeApp
+  xmlns="http://schemas.microsoft.com/office/appforoffice/1.1"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:bt="http://schemas.microsoft.com/office/officeappbasictypes/1.0"
+  xmlns:ov="http://schemas.microsoft.com/office/taskpaneappversionoverrides"
+  xsi:type="TaskPaneApp">
+
+  <!-- ═══════════════════════════ Identity ═══════════════════════════════════ -->
+  <!-- Fixed GUID — do not regenerate; changing it breaks existing sideloads.   -->
+  <Id>7f3a2e1b-4c8d-4f9e-a2b3-5d6e7f8a9b0c</Id>
+  <Version>1.0.0.0</Version>
+  <ProviderName>Spark Connect for Excel</ProviderName>
+  <DefaultLocale>en-US</DefaultLocale>
+
+  <DisplayName DefaultValue="Spark Connect for Excel" />
+  <Description DefaultValue="Run Spark SQL queries against your Spark Connect cluster and land results directly in Excel — no backend server required." />
+
+  <!-- Icons shown in the Office Store / Insert > My Add-ins dialog. -->
+  <IconUrl DefaultValue="https://localhost:3000/assets/icon-32.png" />
+  <HighResolutionIconUrl DefaultValue="https://localhost:3000/assets/icon-80.png" />
+  <SupportUrl DefaultValue="https://localhost:3000" />
+
+  <!-- ═══════════════════════════ App Domains ════════════════════════════════ -->
+  <!--
+    https://localhost:3000 is listed so that the Office Dialog window launched
+    via displayDialogAsync (src/dialog/dialog.html — same origin) is allowed.
+    DialogApi requires the dialog URL's origin to appear in AppDomains.
+  -->
+  <AppDomains>
+    <AppDomain>https://localhost:3000</AppDomain>
+  </AppDomains>
+
+  <!-- ═══════════════════════════ Hosts ═════════════════════════════════════ -->
+  <Hosts>
+    <Host Name="Workbook" />
+  </Hosts>
+
+  <!-- ═══════════════════════════ Default Settings ══════════════════════════ -->
+  <!--
+    SourceLocation: dev server path.  Release pipeline replaces
+    https://localhost:3000 with the production CDN origin (e.g. GitHub Pages URL).
+    Vite outputs the task pane to /taskpane/taskpane.html.
+  -->
+  <!-- ═══════════════════════════ Requirement Sets ══════════════════════════ -->
+  <!--
+    ExcelApi 1.12: required for full range/chart feature set used in v0.
+    DialogApi 1.2: required for messageChild (parent→dialog push) + messageParent
+                   both directions — used by SparkBridgeClient/Host (DECISIONS #1).
+  -->
+  <Requirements>
+    <Sets DefaultMinVersion="1.1">
+      <Set Name="ExcelApi" MinVersion="1.12" />
+      <Set Name="DialogApi" MinVersion="1.2" />
+    </Sets>
+  </Requirements>
+
+  <DefaultSettings>
+    <SourceLocation DefaultValue="https://localhost:3000/taskpane/taskpane.html" />
+  </DefaultSettings>
+
+  <!-- ═══════════════════════════ Permissions ═══════════════════════════════ -->
+  <Permissions>ReadWriteDocument</Permissions>
+
+  <!-- ═══════════════════════════ Version Overrides ═════════════════════════ -->
+  <!--
+    VersionOverrides 1.0 — taskpane form factor.
+    Adds a "Spark SQL" ribbon button to the Home tab that opens the task pane.
+  -->
+  <VersionOverrides xmlns="http://schemas.microsoft.com/office/taskpaneappversionoverrides"
+                    xsi:type="VersionOverridesV1_0">
+
+    <Hosts>
+      <Host xsi:type="Workbook">
+
+        <DesktopFormFactor>
+
+          <!-- FunctionFile is required by schema even for pure taskpane add-ins. -->
+          <FunctionFile resid="Taskpane.Url" />
+
+          <ExtensionPoint xsi:type="PrimaryCommandSurface">
+            <OfficeTab id="TabHome">
+              <Group id="SparkConnectGroup">
+                <Label resid="Group.Label" />
+                <Icon>
+                  <bt:Image size="16" resid="Icon.16x16" />
+                  <bt:Image size="32" resid="Icon.32x32" />
+                  <bt:Image size="80" resid="Icon.80x80" />
+                </Icon>
+
+                <!-- ── Spark SQL button ── -->
+                <Control xsi:type="Button" id="SparkSQLButton">
+                  <Label resid="SparkSQLButton.Label" />
+                  <Supertip>
+                    <Title resid="SparkSQLButton.Label" />
+                    <Description resid="SparkSQLButton.Tooltip" />
+                  </Supertip>
+                  <Icon>
+                    <bt:Image size="16" resid="Icon.16x16" />
+                    <bt:Image size="32" resid="Icon.32x32" />
+                    <bt:Image size="80" resid="Icon.80x80" />
+                  </Icon>
+                  <Action xsi:type="ShowTaskpane">
+                    <TaskpaneId>SparkConnectTaskpane</TaskpaneId>
+                    <SourceLocation resid="Taskpane.Url" />
+                  </Action>
+                </Control>
+
+              </Group>
+            </OfficeTab>
+          </ExtensionPoint>
+
+        </DesktopFormFactor>
+
+      </Host>
+    </Hosts>
+
+    <!-- ═══════════════════════ Resources ═══════════════════════════════════ -->
+    <!--
+      All URLs point to https://localhost:3000.
+      Release pipeline substitutes the production origin before publishing.
+      Icon paths match Vite's output: /assets/icon-{size}.png.
+    -->
+    <Resources>
+      <bt:Images>
+        <bt:Image id="Icon.16x16" DefaultValue="https://localhost:3000/assets/icon-16.png" />
+        <bt:Image id="Icon.32x32" DefaultValue="https://localhost:3000/assets/icon-32.png" />
+        <bt:Image id="Icon.80x80" DefaultValue="https://localhost:3000/assets/icon-80.png" />
+      </bt:Images>
+
+      <bt:Urls>
+        <!-- Vite outputs the task pane entry point here. -->
+        <bt:Url id="Taskpane.Url" DefaultValue="https://localhost:3000/taskpane/taskpane.html" />
+      </bt:Urls>
+
+      <bt:ShortStrings>
+        <bt:String id="Group.Label"           DefaultValue="Spark Connect" />
+        <bt:String id="SparkSQLButton.Label"  DefaultValue="Spark SQL" />
+      </bt:ShortStrings>
+
+      <bt:LongStrings>
+        <bt:String id="SparkSQLButton.Tooltip"
+          DefaultValue="Open the Spark SQL panel to query your Spark Connect cluster and write results to the sheet." />
+      </bt:LongStrings>
+    </Resources>
+
+  </VersionOverrides>
+
+</OfficeApp>

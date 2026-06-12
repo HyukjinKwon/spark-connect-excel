@@ -1,0 +1,41 @@
+{
+  "name": "spark-connect-excel",
+  "version": "0.1.0",
+  "description": "Run Spark SQL against your own Spark Connect cluster from Excel — results land in a range, refreshable and chartable, with no backend server (powered by pyspark-connect-web).",
+  "license": "Apache-2.0",
+  "author": "Hyukjin Kwon",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/HyukjinKwon/spark-connect-excel"
+  },
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint . && prettier --check \"src/**/*.{ts,css}\"",
+    "lint:fix": "eslint . --fix && prettier --write \"src/**/*.{ts,css}\"",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:py": "python -m pytest python/tests -q",
+    "test:e2e": "playwright test --config tests/e2e/playwright.config.ts",
+    "test:e2e:coi": "playwright test coi.spec.ts --config tests/e2e/playwright.config.ts",
+    "build:manifest": "node scripts/build-manifest.mjs",
+    "validate": "office-addin-manifest validate manifest.xml"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.9.0",
+    "@playwright/test": "^1.46.0",
+    "@types/office-js": "^1.0.377",
+    "@vitest/coverage-v8": "^2.0.5",
+    "eslint": "^9.9.0",
+    "jsdom": "^24.1.1",
+    "office-addin-manifest": "^1.13.4",
+    "prettier": "^3.3.3",
+    "typescript": "^5.5.4",
+    "typescript-eslint": "^8.2.0",
+    "vite": "^5.4.2",
+    "vitest": "^2.0.5"
+  }
+}

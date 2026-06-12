@@ -1,0 +1,38 @@
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Spark Connect for Excel</title>
+
+    <!--
+      Office.js must be loaded before any add-in code runs.
+      The hosted CDN version is used so the runtime always gets the latest
+      patch that matches the host's version negotiation.
+    -->
+    <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
+
+    <!--
+      ui.css is owned by Lane E (Query UX).
+      This shell only declares the link so the HTML is valid and Vite can
+      resolve the asset graph; Lane E provides the actual stylesheet.
+    -->
+    <link rel="stylesheet" href="./ui.css" />
+  </head>
+  <body>
+    <!--
+      Root mount point.  Lane E's taskpane.ts bootstraps the UI here after
+      Office.onReady() fires.  No content is placed here by Lane A so that
+      Lane E has full control over the DOM structure.
+    -->
+    <div id="app"></div>
+
+    <!--
+      taskpane.ts is owned by Lane E.
+      type="module" is required so Vite can tree-shake and code-split;
+      it also defers execution until after the DOM is parsed.
+    -->
+    <script type="module" src="./taskpane.ts"></script>
+  </body>
+</html>

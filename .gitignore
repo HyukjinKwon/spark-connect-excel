@@ -1,0 +1,14 @@
+node_modules/
+dist/
+coverage/
+.vite/
+*.log
+.DS_Store
+playwright-report/
+test-results/
+deploy/certs/
+__pycache__/
+.pytest_cache/
+*.pyc
+.env
+.env.local

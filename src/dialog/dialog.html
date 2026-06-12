@@ -1,0 +1,83 @@
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<!--
+  dialog.html — The Office Dialog window (Lane B).
+
+  This page is the COI host: it is served with
+    Cross-Origin-Opener-Policy: same-origin
+    Cross-Origin-Embedder-Policy: credentialless
+  so that SharedArrayBuffer/Atomics are available inside the window
+  (required by pyspark-connect-web's SAB blocking bridge).
+
+  DECISIONS.md #1: The COI host is THIS window, not the task pane.
+  DECISIONS.md #2: COEP is `credentialless`, not `require-corp`, so that
+    cross-origin Pyodide/PyPI resources load without CORP headers.
+
+  Boot order:
+    1. coi-serviceworker.js (inline <script>) — belt-and-suspenders: even on
+       header-less hosting the SW re-emits COOP/COEP so we become isolated after
+       one reload. The SW guards against reload loops via sessionStorage.
+    2. Office.js — required before Office.onReady() in dialogHost.ts.
+    3. dialogHost.ts (module) — boots Pyodide, wires the bridge, handles messages.
+-->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Spark Connect — Dialog Host</title>
+
+    <!--
+      Step 1 — COI service-worker shim.
+      Must load BEFORE Office.js and the module so that, if a reload is
+      triggered, any subsequently loaded scripts already benefit from isolation.
+      The <script> tag is intentionally NOT type="module" so it runs
+      synchronously (SW registration is async internally, but we want the
+      registration call to happen as early as possible).
+    -->
+    <script src="/vendor/coi-serviceworker.js"></script>
+
+    <!--
+      Step 2 — Office.js CDN.
+      Loaded before the module so Office.onReady() is available when
+      dialogHost.ts runs.  COEP `credentialless` lets this cross-origin script
+      load without a CORP header (DECISIONS.md #2).
+    -->
+    <script
+      src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"
+      type="text/javascript"
+    ></script>
+
+    <style>
+      body {
+        font-family: "Segoe UI", system-ui, sans-serif;
+        font-size: 14px;
+        margin: 0;
+        padding: 16px;
+        background: #fff;
+        color: #201f1e;
+      }
+      #status {
+        padding: 8px 12px;
+        border-radius: 4px;
+        background: #f3f2f1;
+        color: #323130;
+        line-height: 1.5;
+        white-space: pre-wrap;
+      }
+      #status.error {
+        background: #fde7e9;
+        color: #a4262c;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Step 3 — Minimal status surface updated by dialogHost.ts. -->
+    <div id="status">Starting Spark engine…</div>
+
+    <!--
+      Step 4 — Dialog entry-point module (Lane B).
+      Loads AFTER Office.js so Office.onReady() resolves correctly.
+    -->
+    <script type="module" src="./dialogHost.ts"></script>
+  </body>
+</html>

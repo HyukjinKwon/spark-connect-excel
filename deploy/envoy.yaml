@@ -1,0 +1,170 @@
+# SPDX-License-Identifier: Apache-2.0
+#
+# Envoy config for spark-connect-excel (Lane I) — DEV stack.
+#
+# Adapted from pyspark-connect-web's deploy/envoy.yaml.
+# Key differences from the upstream pcw config:
+#   * CORS allow-origin covers the Excel add-in origins:
+#       - http://localhost:3000   (Vite dev server while developing the add-in)
+#       - http://localhost:8000   (static host — this compose stack)
+#     Dev mode uses a safe_regex that allows both; prod uses exact strings.
+#   * COEP on the static listener is `credentialless` (NOT `require-corp`) —
+#     DECISIONS #2: allows the Office dialog window to load cross-origin Pyodide
+#     (jsDelivr CDN) and PyPI wheels without those origins needing CORP headers.
+#     Chromium-based Office hosts (WebView2 / Edge) support credentialless.
+#   * CORP header on the static host is `cross-origin` (lets embedded resources
+#     be loaded cross-origin without opt-in from the resource server).
+#   * `authorization` header is included in allow_headers so a Bearer token
+#     from the task pane is forwarded through the CORS preflight and upstream
+#     to Spark Connect (DECISIONS #6).
+#
+# Two listeners:
+#   :8081  grpc-web endpoint -> Spark Connect gRPC server (:15002)
+#          Browser client URL: sc://localhost:8081/;transport=grpcweb
+#   :8000  static add-in host with COOP same-origin + COEP credentialless
+#
+# Bring up with deploy/compose.yaml.
+
+admin:
+  address:
+    socket_address: { address: 0.0.0.0, port_value: 9901 }
+
+static_resources:
+  listeners:
+    # -------------------------------------------------------------------------
+    # grpc-web endpoint  (Excel add-in dialog -> Spark Connect)
+    # -------------------------------------------------------------------------
+    - name: grpcweb_listener
+      address:
+        socket_address: { address: 0.0.0.0, port_value: 8081 }
+      filter_chains:
+        - filters:
+            - name: envoy.filters.network.http_connection_manager
+              typed_config:
+                "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+                stat_prefix: grpcweb
+                codec_type: AUTO
+                # Spark Connect ExecutePlan/ReattachExecute are long-lived server
+                # streams; disable idle timeout so Envoy does not cut them.
+                stream_idle_timeout: 0s
+                route_config:
+                  name: grpcweb_route
+                  virtual_hosts:
+                    - name: grpcweb_host
+                      domains: ["*"]
+                      # CORS: allow the Excel add-in's known origins.
+                      #   http://localhost:3000  — Vite dev server
+                      #   http://localhost:8000  — static host (this stack)
+                      # The regex is locked to localhost only; no wildcard that
+                      # would permit arbitrary origins.  Prod uses exact strings.
+                      cors:
+                        allow_origin_string_match:
+                          - safe_regex:
+                              regex: "^https?://localhost:(3000|8000)$"
+                        allow_methods: "GET, POST, OPTIONS"
+                        allow_headers: >-
+                          keep-alive,user-agent,cache-control,content-type,content-transfer-encoding,
+                          x-grpc-web,x-user-agent,grpc-timeout,authorization,x-spark-connect-session-id
+                        expose_headers: "grpc-status,grpc-message,x-spark-connect-session-id"
+                        max_age: "1728000"
+                      routes:
+                        - match: { prefix: "/" }
+                          route:
+                            cluster: spark-connect
+                            timeout: 0s
+                            max_stream_duration:
+                              grpc_timeout_header_max: 0s
+                http_filters:
+                  - name: envoy.filters.http.grpc_web
+                    typed_config:
+                      "@type": type.googleapis.com/envoy.extensions.filters.http.grpc_web.v3.GrpcWeb
+                  - name: envoy.filters.http.cors
+                    typed_config:
+                      "@type": type.googleapis.com/envoy.extensions.filters.http.cors.v3.Cors
+                  - name: envoy.filters.http.router
+                    typed_config:
+                      "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
+
+    # -------------------------------------------------------------------------
+    # Static add-in host — COOP/COEP so the Office Dialog window is isolated
+    # -------------------------------------------------------------------------
+    - name: static_listener
+      address:
+        socket_address: { address: 0.0.0.0, port_value: 8000 }
+      filter_chains:
+        - filters:
+            - name: envoy.filters.network.http_connection_manager
+              typed_config:
+                "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+                stat_prefix: static
+                codec_type: AUTO
+                route_config:
+                  name: static_route
+                  virtual_hosts:
+                    - name: static_host
+                      domains: ["*"]
+                      routes:
+                        - match: { prefix: "/" }
+                          route: { cluster: static-site }
+                          # MANDATORY cross-origin isolation headers.
+                          # COOP same-origin: prevents the dialog window from
+                          # being opened by a cross-origin opener (required for SAB).
+                          # COEP credentialless (DECISIONS #2): allows loading
+                          # cross-origin sub-resources (Pyodide, PyPI wheels) without
+                          # requiring those origins to opt in via CORP headers.
+                          # This is the correct value for our use-case — `require-corp`
+                          # would block jsDelivr/PyPI CDN resources that don't send CORP.
+                          response_headers_to_add:
+                            - header:
+                                key: "Cross-Origin-Opener-Policy"
+                                value: "same-origin"
+                              append_action: OVERWRITE_IF_EXISTS_OR_ADD
+                            - header:
+                                key: "Cross-Origin-Embedder-Policy"
+                                value: "credentialless"
+                              append_action: OVERWRITE_IF_EXISTS_OR_ADD
+                            # Permit the page to be loaded cross-origin (e.g. embedded
+                            # in an Office dialog from a different origin).
+                            - header:
+                                key: "Cross-Origin-Resource-Policy"
+                                value: "cross-origin"
+                              append_action: OVERWRITE_IF_EXISTS_OR_ADD
+                http_filters:
+                  - name: envoy.filters.http.router
+                    typed_config:
+                      "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
+
+  clusters:
+    # Upstream Spark Connect gRPC server (HTTP/2, h2c — no TLS inside compose net).
+    - name: spark-connect
+      type: STRICT_DNS
+      lb_policy: ROUND_ROBIN
+      typed_extension_protocol_options:
+        envoy.extensions.upstreams.http.v3.HttpProtocolOptions:
+          "@type": type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions
+          explicit_http_config:
+            http2_protocol_options: {}
+      load_assignment:
+        cluster_name: spark-connect
+        endpoints:
+          - lb_endpoints:
+              - endpoint:
+                  address:
+                    socket_address:
+                      # Resolves to the spark-connect service in compose DNS.
+                      address: spark-connect
+                      port_value: 15002
+
+    # Static file server sidecar (serves ../dist over HTTP/1.1 on :80).
+    - name: static-site
+      type: STRICT_DNS
+      lb_policy: ROUND_ROBIN
+      load_assignment:
+        cluster_name: static-site
+        endpoints:
+          - lb_endpoints:
+              - endpoint:
+                  address:
+                    socket_address:
+                      address: static
+                      port_value: 80

@@ -1,0 +1,104 @@
+# SPDX-License-Identifier: Apache-2.0
+#
+# ci.yml — main CI pipeline for spark-connect-excel.
+#
+# Runs on every push and pull-request:
+#   1. Node 20 setup + npm ci (with npm cache)
+#   2. TypeScript type-check (tsc --noEmit)
+#   3. ESLint + Prettier check
+#   4. Vitest unit tests
+#   5. Python 3.11 setup + pip install + pytest
+#   6. Vite build (produces dist/)
+#   7. Office manifest validation
+#   8. COI header guard (asserts COOP/COEP are present in vite.config.ts and deploy/)
+
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+
+jobs:
+  ci:
+    name: Lint / Test / Build / Validate
+    runs-on: ubuntu-latest
+
+    steps:
+      # -----------------------------------------------------------------------
+      # Checkout
+      # -----------------------------------------------------------------------
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # -----------------------------------------------------------------------
+      # Node 20 + npm cache
+      # -----------------------------------------------------------------------
+      - name: Set up Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      # -----------------------------------------------------------------------
+      # Install Node dependencies
+      # -----------------------------------------------------------------------
+      - name: Install Node dependencies
+        run: npm ci
+
+      # -----------------------------------------------------------------------
+      # TypeScript type-check
+      # -----------------------------------------------------------------------
+      - name: TypeScript type-check
+        run: npm run typecheck
+
+      # -----------------------------------------------------------------------
+      # Lint (ESLint + Prettier)
+      # -----------------------------------------------------------------------
+      - name: Lint (ESLint + Prettier)
+        run: npm run lint
+
+      # -----------------------------------------------------------------------
+      # Vitest unit tests
+      # -----------------------------------------------------------------------
+      - name: Unit tests (Vitest)
+        run: npm test
+
+      # -----------------------------------------------------------------------
+      # Python 3.11 + pytest
+      # -----------------------------------------------------------------------
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Python test dependencies
+        run: pip install pandas numpy pytest
+
+      - name: Python unit tests (pytest)
+        run: python -m pytest python/tests -q
+
+      # -----------------------------------------------------------------------
+      # Build (tsc --noEmit + vite build)
+      # -----------------------------------------------------------------------
+      - name: Build (vite)
+        run: npm run build
+
+      # -----------------------------------------------------------------------
+      # Office manifest validation
+      # -----------------------------------------------------------------------
+      - name: Validate Office manifest
+        run: npx office-addin-manifest validate manifest.xml
+
+      # -----------------------------------------------------------------------
+      # COI header guard
+      # Asserts that the mandatory cross-origin isolation headers are present in:
+      #   - vite.config.ts  (dev server + preview block)
+      #   - deploy/ configs (Envoy static-host listener)
+      # A missing or wrong header value here breaks SharedArrayBuffer in the
+      # dialog window (DECISIONS #1/#2) and would silently break the whole add-in.
+      # -----------------------------------------------------------------------
+      - name: COI header guard (vite.config.ts + deploy/)
+        shell: bash
+        run: bash scripts/check-coi-headers.sh

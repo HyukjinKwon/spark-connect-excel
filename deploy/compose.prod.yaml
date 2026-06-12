@@ -1,0 +1,53 @@
+# SPDX-License-Identifier: Apache-2.0
+#
+# PRODUCTION docker-compose OVERLAY for spark-connect-excel (Lane I).
+#
+# Adapted from pyspark-connect-web's deploy/compose.prod.yaml.
+#
+# Use as a compose override on top of the dev base:
+#
+#   docker compose -f deploy/compose.yaml -f deploy/compose.prod.yaml up -d
+#
+# What this changes vs deploy/compose.yaml (the dev base):
+#   * envoy uses the HARDENED config (deploy/envoy.prod.yaml): TLS, tight CORS
+#     (exact-match add-in origins only), bearer-token gate, size limits, health
+#     endpoints. Admin is loopback-only.
+#   * envoy publishes TLS ports 8443 (grpc-web) and 8444 (static add-in host)
+#     and 8089 (health probe) instead of the dev 8081/8000. Admin :9901 is NOT
+#     published.
+#   * ./certs is bind-mounted read-only into the envoy container so TLS cert
+#     and key are available at /etc/envoy/certs/tls.{crt,key}.
+#   * spark-connect's raw gRPC port (15002) is NOT published to the host in
+#     prod — the Connect server is private; only the Envoy proxy is public.
+#
+# BEFORE bringing this up:
+#   1. Provide a TLS cert:
+#        deploy/certs/tls.crt  (full chain)
+#        deploy/certs/tls.key  (private key, chmod 600)
+#      For a quick self-signed cert (staging / demo only):
+#        PCW_PUBLIC_HOST=localhost scripts/gen_dev_cert.sh
+#   2. Replace placeholder origins in deploy/envoy.prod.yaml:
+#        YOUR-PUBLIC-HOST.example.com   -> your Envoy host
+#        YOUR-ADDIN-ORIGIN.example.com  -> your add-in static-host origin
+#      Or render without touching the template:
+#        SCE_PUBLIC_HOST=spark.example.com \
+#        SCE_ADDIN_ORIGIN=https://addin.example.com \
+#        scripts/render_envoy_prod.sh > deploy/envoy.prod.rendered.yaml
+#   3. Consider replacing the Lua bearer-token gate with jwt_authn or ext_authz
+#      (see comments in deploy/envoy.prod.yaml) for production token validation.
+
+services:
+  spark-connect:
+    # In prod the Connect server is private; drop the host port binding.
+    ports: []
+
+  envoy:
+    command: ["-c", "/etc/envoy/envoy.prod.yaml", "--service-cluster", "sce-envoy-prod"]
+    volumes:
+      - ./envoy.prod.yaml:/etc/envoy/envoy.prod.yaml:ro
+      - ./certs:/etc/envoy/certs:ro
+    ports:
+      - "8443:8443"   # grpc-web over TLS  (sc://YOUR-HOST:8443/;transport=grpcweb)
+      - "8444:8444"   # add-in static host over TLS (COOP same-origin + COEP credentialless)
+      - "8089:8089"   # health/readiness probe (for load balancer / k8s)
+      # NOTE: :9901 admin intentionally NOT published in prod.
