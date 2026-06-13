@@ -88,11 +88,6 @@ This serves the add-in and opens Excel with it sideloaded. The **Apache Spark**
 button (group **Spark Connect**) appears on the Home ribbon. Full guides are on
 the [documentation site](https://hyukjinkwon.github.io/spark-connect-excel/).
 
-> **Excel on the web is not supported.** The engine runs in a cross-origin-isolated
-> dialog window (it needs `SharedArrayBuffer`), and Excel on the web refuses to
-> open one. Use Excel **desktop**, or the standalone **web demo** above for an
-> in-browser run.
-
 ## Compatibility
 
 | Component | Supported |
