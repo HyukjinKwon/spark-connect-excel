@@ -4,7 +4,8 @@
 # One-command setup for Spark Connect for Excel. Clones (if needed), installs
 # deps, sets up the local HTTPS dev cert, and serves the add-in.
 #
-#   # Excel on the web (default): clone + install + serve at https://localhost:3000
+#   # Default: clone + install + serve the add-in and standalone web demo at
+#   # https://localhost:3000 (open /demo/demo.html for an in-browser run)
 #   curl -fsSL https://raw.githubusercontent.com/HyukjinKwon/spark-connect-excel/main/scripts/quickstart.sh | bash
 #
 #   # Windows/Mac desktop: also sideload + open Excel
@@ -65,8 +66,8 @@ if [ "$MODE" = "desktop" ]; then
   (npm run dev:https >/tmp/scx-dev.log 2>&1 &)
   npx --yes office-addin-debugging start manifest.xml desktop --app excel
 else
-  say "serving the add-in at https://localhost:3000"
-  say "Next: open Excel on the web (Edge/Chrome) ->"
-  say "      Insert -> Add-ins -> Upload My Add-in -> choose manifest.xml"
+  say "serving the add-in and standalone web demo at https://localhost:3000"
+  say "Next: open https://localhost:3000/demo/demo.html for an in-browser run,"
+  say "      or re-run with 'desktop' to sideload into Excel desktop."
   npm run dev:https
 fi

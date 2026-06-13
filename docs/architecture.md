@@ -18,7 +18,7 @@ The compute runs on the user's cluster; the query client runs in the browser via
 
 ```mermaid
 flowchart TD
-    subgraph excel["Excel host (Windows WebView2 / Mac WKWebView / Excel on the web)"]
+    subgraph excel["Excel desktop host (Windows WebView2 / Mac WKWebView)"]
         tp["Task pane (taskpane.html): connection form, SQL editor, Run / Refresh / Insert Chart"]
         subgraph dialog["COI dialog window (dialog.html) - COOP: same-origin + COEP: credentialless"]
             host["PyodideHost: Web Worker + bridge.js SharedArrayBuffer handshake"]
@@ -49,8 +49,7 @@ flowchart TD
 `SharedArrayBuffer` (the backbone of pyspark-connect-web's blocking `.collect()`)
 requires cross-origin isolation (`crossOriginIsolated === true`). The task-pane
 iframe is embedded inside Excel's host process and we cannot reliably control
-its COOP/COEP headers across Windows WebView2, Mac WKWebView, and Excel on the
-web.
+its COOP/COEP headers across Windows WebView2 and Mac WKWebView.
 
 **Solution:** Pyodide + pyspark-connect-web run inside an **Office Dialog window**
 opened via `Office.context.ui.displayDialogAsync()`. That window is a real
@@ -70,7 +69,7 @@ The task pane acts as the UI and the Office range-writer; the dialog hosts Spark
 pyspark-connect-web wheel (loaded from PyPI CDN) because those CDN origins do
 not send `Cross-Origin-Resource-Policy` headers. `credentialless` grants
 cross-origin access to any resource that doesn't carry credentials (cookies/auth),
-which covers CDN wheels. Chromium-based Office hosts (WebView2, Edge, Chrome)
+which covers CDN wheels. Chromium-based Office hosts (Windows WebView2)
 fully support `credentialless`. CI asserts its presence.
 
 ### DECISIONS #3 - Reuse pyspark-connect-web; do not fork

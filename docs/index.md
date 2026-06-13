@@ -13,8 +13,6 @@ cluster, land the result in a worksheet range, refresh it, and chart it - with
 
 <p align="center">
   <img src="screenshots/web-demo-live.png" alt="The web demo connected to a live Spark Connect server, running a Spark SQL query and rendering the result as a table and a bar chart." width="760" />
-  <br/>
-  <em>A live Spark SQL query in the browser - real result table and chart, connected to a Spark Connect server. Captured by the end-to-end CI run.</em>
 </p>
 
 ## Highlights

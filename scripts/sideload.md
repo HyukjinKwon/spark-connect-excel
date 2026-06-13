@@ -5,16 +5,9 @@
 Sideloading installs the add-in from `manifest.xml` without publishing to
 AppSource. This is the standard development and team-deployment path.
 
-## Recommended: Excel on the web (fewest steps, no admin)
-
-1. Start the HTTPS dev server: `npm run dev:https` (run `npx office-addin-dev-certs
-   install` once first).
-2. Open **Excel on the web** in Microsoft Edge or Google Chrome.
-3. **Insert -> Add-ins -> Upload My Add-in** -> choose `manifest.xml`.
-
-That's it - no catalog, no admin, no desktop config. To share with others, host
-the bundle and point the manifest at it (see `docs/distribution.md`), then they
-upload that `manifest.xml` the same way.
+> **Note:** Excel on the web is not supported (the engine needs a
+> cross-origin-isolated dialog the web host will not open); use Excel desktop,
+> or the standalone web demo for in-browser use.
 
 ## Quick start for desktop (Windows / Mac)
 
@@ -57,15 +50,6 @@ Manual path:
 ```
 Create the `wef/` directory if it doesn't exist, copy `manifest.xml` there, and restart Excel.
 
-### Excel on the web (Microsoft 365)
-
-1. Open Excel on the web.
-2. Go to **Insert > Add-ins > Upload My Add-in**.
-3. Browse to and upload `manifest.xml`.
-
-The add-in's `SourceLocation` must be accessible from the internet (or via a
-tunnel - see the ngrok tip below).
-
 ## HTTPS for Windows/Mac
 
 The dev server uses plain HTTP by default. Windows WebView2 and Mac WKWebView
@@ -76,17 +60,19 @@ npx office-addin-dev-certs install   # once - installs an OS-trusted local cert
 npm run dev:https                    # serves https://localhost:3000 (COI headers + TLS)
 ```
 
-## Testing with ngrok (Excel on the web / remote team)
+## Hosting for remote desktop installers
 
-If you need to sideload from a machine that isn't localhost:
+If others need to sideload from a machine that isn't your localhost, host the
+bundle so its `SourceLocation` is reachable. For a quick tunnel during testing:
 
 ```bash
 npm run dev       # Start Vite on port 3000
 ngrok http 3000   # Expose via HTTPS tunnel
 ```
 
-Update `manifest.xml`'s `SourceLocation` to the ngrok HTTPS URL, then sideload
-the updated manifest in Excel on the web.
+Update `manifest.xml`'s `SourceLocation` to the ngrok HTTPS URL (or your
+production origin - see `docs/distribution.md`), then sideload the updated
+manifest on the target desktop machine.
 
 ## Stopping / uninstalling
 
@@ -97,4 +83,3 @@ npx office-addin-debugging stop manifest.xml
 To remove the sideloaded add-in manually:
 - Windows: delete the manifest file from `%APPDATA%\Microsoft\Excel\XLSTART\`
 - Mac: delete the manifest from `~/Library/Containers/.../wef/`
-- Excel on the web: Insert > My Add-ins -> context menu -> Remove

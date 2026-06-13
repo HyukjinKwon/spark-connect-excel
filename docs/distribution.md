@@ -112,7 +112,7 @@ Before hosting for others:
 - [ ] `AppDomains` lists the production origin
 - [ ] Production bundle hosted on HTTPS with COOP/COEP headers
 - [ ] `office-addin-manifest validate manifest.xml` passes
-- [ ] Tested on a Chromium-based Excel host (Windows / Microsoft 365 or the web)
+- [ ] Tested on Excel desktop (Windows / Mac)
 - [ ] The manifest's `Id` GUID is unchanged (changing it breaks existing installs)
 
 ### Updating the production origin in manifest.xml

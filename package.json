@@ -1,6 +1,6 @@
 {
   "name": "spark-connect-excel",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Run Spark SQL against your own Spark Connect cluster from Excel — results land in a range, refreshable and chartable, with no backend server (powered by pyspark-connect-web).",
   "license": "Apache-2.0",
   "author": "Hyukjin Kwon",

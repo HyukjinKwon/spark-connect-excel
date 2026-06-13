@@ -1,19 +1,23 @@
 # SPDX-License-Identifier: Apache-2.0
-name: e2e-full
+name: engine-e2e
 
-# The COMPLETE browser-to-Spark end-to-end gate: vendors Pyodide + the wheels,
-# brings up the real Spark Connect + Envoy + static stack via docker compose,
-# and drives the web demo in headless Chromium through a live Spark SQL query.
+# The COMPLETE engine end-to-end gate for the browser-hosted ENGINE (Pyodide +
+# grpc-web + Spark Connect) - the SAME engine the Excel desktop dialog window
+# runs. This is NOT an Excel-on-the-web host test; it exercises the engine in a
+# headless Chromium browser via the standalone web demo so we can drive a live
+# Spark SQL query end to end. It vendors Pyodide + the wheels, brings up the real
+# Spark Connect + Envoy + static stack via docker compose, and runs the query.
 # Heavier and slower than ci.yml / e2e.yml; separate workflow.
 #
 # STATUS: GREEN and gating. It vendors Pyodide 314.0.0 + the pyspark-client/pcw
 # wheels, brings up Spark Connect + Envoy + the static host, boots the in-browser
 # Pyodide engine, connects through grpc-web, runs a real Spark SQL query, and
 # asserts the rendered result table AND chart - then uploads a live screenshot
-# (web-demo-live.png). This is the complete browser-to-Spark proof.
+# (web-demo-live.png). This is the complete engine-to-Spark proof (the desktop
+# dialog runs this same engine).
 #
 # Runs on pushes to main and on PRs (and on demand). Heavier/slower than ci.yml
-# and e2e.yml, but it is the definitive end-to-end gate.
+# and e2e.yml, but it is the definitive engine end-to-end gate.
 
 on:
   push:
@@ -30,7 +34,7 @@ permissions:
 
 jobs:
   full:
-    name: full browser e2e (Pyodide + grpc-web + Spark)
+    name: engine e2e (Pyodide + grpc-web + Spark)
     runs-on: ubuntu-latest
     timeout-minutes: 45
     env:
