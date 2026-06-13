@@ -15,7 +15,9 @@
   <!-- =========================== Identity =================================== -->
   <!-- Fixed GUID - do not regenerate; changing it breaks existing sideloads.   -->
   <Id>7f3a2e1b-4c8d-4f9e-a2b3-5d6e7f8a9b0c</Id>
-  <Version>0.2.0.0</Version>
+  <!-- Office manifest version: 4-part, MUST be >= 1.0 (independent of the npm
+       package / release version). Bumped per release for update detection. -->
+  <Version>1.1.0.0</Version>
   <ProviderName>Spark Connect for Excel</ProviderName>
   <DefaultLocale>en-US</DefaultLocale>
 
